@@ -18,7 +18,7 @@
   var FONT = 'system-ui, -apple-system, "SF Pro Display", Roboto, "Segoe UI", sans-serif';
 
   /* Круги, которыми самолётик сталкивается: корпус, кот, нос. */
-  var HITBOX = [[2, 0, 12], [0, -18, 9], [22, -1, 8]];
+  var HITBOX = [[2, 0, 12], [1, -19, 10], [22, -1, 8]];
 
   function $(id) { return document.getElementById(id); }
 
@@ -33,15 +33,9 @@
     hint: $('hint'),
     banner: $('banner'),
     bannerName: $('banner-name'),
-    bannerTagline: $('banner-tagline'),
     loading: $('loading'),
-    comicCanvas: $('comic-canvas'),
-    comicTop: $('comic-top'),
-    comicBottom: $('comic-bottom'),
     cardMedia: $('card-media'),
     cardImage: $('card-image'),
-    cardRegion: $('card-region'),
-    cardCount: $('card-count'),
     cardTitle: $('card-title'),
     cardText: $('card-text'),
     btnCard: $('btn-card'),
@@ -138,10 +132,7 @@
     plane.x = clamp(W * 0.28, 70, 260);
     topLimit = null;
     Art.setup(scale, W);
-    if (content) {
-      Art.release([sceneOf(regionIdx)]);
-      if (state === 'menu') drawComic();
-    }
+    if (content) Art.release([sceneOf(regionIdx)]);
   }
 
   /* Нижний край плашки счёта в координатах мира: просветы не прячутся под неё. */
@@ -178,9 +169,6 @@
     });
 
     document.title = c.title + ': ' + c.subtitle.toLowerCase();
-    ui.comicTop.textContent = c.intro[0];
-    ui.comicBottom.textContent = c.intro[1] || '';
-    ui.comicBottom.hidden = !c.intro[1];
   }
 
   /* ---------- интерфейс ---------- */
@@ -269,92 +257,10 @@
     c.setAttribute('aria-label', 'Очки: ' + score);
   }
 
-  /* Комикс в меню: сверху кот-пилот в небе первого региона, снизу регионы маршрута
-     косыми полосами; панели разделяет белая диагональ, как в комиксах приложения. */
-  function drawComic() {
-    var el = ui.comicCanvas;
-    var rect = el.getBoundingClientRect();
-    if (!rect.width || !rect.height) return;
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    el.width = Math.round(rect.width * dpr);
-    el.height = Math.round(rect.height * dpr);
-    var g = el.getContext('2d');
-    var s = el.height / H;
-    var cw = el.width / s;
-    var px = dpr / s;  // один CSS-пиксель в единицах мира
-    var names = content.regions.map(function (r) { return r.scene; });
-    function splitY(x) { return H * (0.56 - 0.14 * x / cw); }
-
-    Art.setup(s, cw);
-    g.setTransform(s, 0, 0, s, 0, 0);
-
-    g.save();
-    g.beginPath();
-    g.moveTo(0, 0);
-    g.lineTo(cw, 0);
-    g.lineTo(cw, splitY(cw));
-    g.lineTo(0, splitY(0));
-    g.closePath();
-    g.clip();
-    Art.drawBack(g, names[0], 80, 1);
-    var k = Math.min(cw * 0.4 / 66, H * 0.28 / 56);
-    g.save();
-    g.translate(cw * 0.6, H * 0.32);
-    g.scale(k, k);
-    Art.drawPlane(g, 0, 0, -0.14, 0.35);
-    g.restore();
-    g.restore();
-
-    var slant = cw * 0.14;
-    g.save();
-    g.beginPath();
-    g.moveTo(0, splitY(0));
-    g.lineTo(cw, splitY(cw));
-    g.lineTo(cw, H);
-    g.lineTo(0, H);
-    g.closePath();
-    g.clip();
-    names.forEach(function (name, i) {
-      var left = cw * i / names.length;
-      var right = cw * (i + 1) / names.length;
-      g.save();
-      g.beginPath();
-      g.moveTo(i === 0 ? -5 : left + slant / 2, H * 0.3);
-      g.lineTo(i === names.length - 1 ? cw + 5 : right + slant / 2, H * 0.3);
-      g.lineTo(i === names.length - 1 ? cw + 5 : right - slant / 2, H);
-      g.lineTo(i === 0 ? -5 : left - slant / 2, H);
-      g.closePath();
-      g.clip();
-      Art.drawBack(g, name, 140 * i + 30, 1);
-      Art.drawGround(g, name, 140 * i + 30, 1);
-      g.restore();
-    });
-    g.strokeStyle = '#ffffff';
-    g.lineWidth = 3 * px;
-    for (var i = 1; i < names.length; i++) {
-      var bx = cw * i / names.length;
-      g.beginPath();
-      g.moveTo(bx + slant / 2, H * 0.3);
-      g.lineTo(bx - slant / 2, H);
-      g.stroke();
-    }
-    g.restore();
-
-    g.strokeStyle = '#ffffff';
-    g.lineWidth = 5 * px;
-    g.beginPath();
-    g.moveTo(-5, splitY(-5));
-    g.lineTo(cw + 5, splitY(cw + 5));
-    g.stroke();
-
-    Art.setup(scale, W);
-    Art.release([sceneOf(regionIdx)]);
-  }
-
   function showBanner(index) {
     var region = content.regions[index];
+    ui.banner.style.setProperty('--region-color', region.color);
     ui.bannerName.textContent = region.name;
-    ui.bannerTagline.textContent = region.tagline;
     ui.banner.hidden = true;
     void ui.banner.offsetWidth;
     ui.banner.hidden = false;
@@ -413,10 +319,6 @@
     });
   }
 
-  function collectedCount() {
-    return collected.filter(Boolean).length;
-  }
-
   /* ---------- ход игры ---------- */
 
   function enterMenu() {
@@ -427,7 +329,6 @@
     plane.vy = 0;
     setState('menu');
     showScreen('menu');
-    drawComic();
   }
 
   function startGame() {
@@ -662,11 +563,10 @@
       Sound.card();
       Bridge.vibrate();
     }
+    screens.card.querySelector('.panel').style.setProperty('--panel-color', region.color);
     ui.cardMedia.hidden = !entry.card.image;
     if (entry.card.image) ui.cardImage.src = entry.card.image;
     else ui.cardImage.removeAttribute('src');
-    ui.cardRegion.textContent = region.name;
-    ui.cardCount.textContent = 'Открытка ' + (k + 1) + ' из ' + cards.length;
     ui.cardTitle.textContent = entry.card.title;
     ui.cardText.innerHTML = '';
     entry.card.text.split(/\n\s*\n/).forEach(function (paragraph) {
@@ -767,53 +667,6 @@
         life: 4, max: 4, size: 4 + Math.random() * 4, color: colors[i % colors.length]
       });
     }
-  }
-
-  /* ---------- шеринг ---------- */
-
-  function shareImage() {
-    var size = 720;
-    var out = document.createElement('canvas');
-    out.width = size;
-    out.height = size;
-    var g = out.getContext('2d');
-    var side = Math.min(canvas.width, canvas.height);
-    var sx = (canvas.width - side) / 2;
-    var sy = clamp(plane.y * scale - side / 2, 0, canvas.height - side);
-    g.drawImage(canvas, sx, sy, side, side, 0, 0, size, size);
-    var shade = g.createLinearGradient(0, size * 0.45, 0, size);
-    shade.addColorStop(0, 'rgba(8,20,40,0)');
-    shade.addColorStop(1, 'rgba(8,20,40,0.85)');
-    g.fillStyle = shade;
-    g.fillRect(0, 0, size, size);
-    var font = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-    g.fillStyle = '#ffffff';
-    g.textAlign = 'left';
-    g.shadowColor = 'rgba(0,0,0,0.45)';
-    g.shadowBlur = 12;
-    g.font = '800 40px ' + font;
-    g.fillText(content.title, 40, 72);
-    g.font = '900 96px ' + font;
-    var points = score >= maxScore ? maxScore : best;
-    g.fillText(points + ' ' + plural(points, ['очко', 'очка', 'очков']), 40, size - 150);
-    g.font = '700 34px ' + font;
-    g.fillText(content.regions.map(function (r) { return r.name; }).join(' · '), 40, size - 96);
-    var count = collectedCount();
-    g.fillText('Открытки: ' + count + ' из ' + cards.length, 40, size - 48);
-    return out.toDataURL('image/jpeg', 0.86);
-  }
-
-  function share() {
-    var route = content.regions.map(function (r) { return r.name; }).join(' — ');
-    var count = collectedCount();
-    var text = score >= maxScore
-      ? 'Я провёл кота-пилота по маршруту ' + route + ' и собрал все ' + cards.length + ' ' +
-        plural(cards.length, ['открытку', 'открытки', 'открыток']) + '! ' + maxScore + ' очков.'
-      : 'Мой полёт с котом-пилотом: ' + best + ' ' + plural(best, ['очко', 'очка', 'очков']) + ' и ' + count + ' ' +
-        plural(count, ['открытка', 'открытки', 'открыток']) + '. Сможешь пролететь дальше?';
-    var image = '';
-    try { image = shareImage(); } catch (e) { image = ''; }
-    Bridge.share(text, image);
   }
 
   /* ---------- кадр ---------- */
@@ -975,7 +828,6 @@
     var action = target.getAttribute('data-action');
     if (action === 'resume') resumeGame();
     else if (action === 'restart') restart();
-    else if (action === 'share') share();
     else if (action === 'exit') exitGame();
   });
 

@@ -8,35 +8,33 @@
   var LOAD_TIMEOUT_MS = 2500;
   var SCENES = ['volga', 'ural', 'baikal'];
   var OBSTACLES = ['pillar', 'rock', 'ice'];
+  var COLORS = ['#E5357F', '#7B4DFF', '#1F86FF'];
 
   var DEFAULT_CONTENT = {
     title: 'Кот-пилот',
     subtitle: 'Полёт над Россией',
-    intro: ['Привет! Я кот-пилот.', 'Полетели со мной изучать нашу бескрайнюю Родину!'],
     pointsPerCard: 10,
     coin: { chance: 0.35, value: 2 },
     regions: [
       {
         id: 'chuvashia', name: 'Чувашия', nameTo: 'в Чувашию',
-        tagline: 'Волга, вышивка и памятник над рекой',
-        scene: 'volga', obstacle: 'pillar', speed: 115, gap: 190,
+        scene: 'volga', color: '#E5357F', obstacle: 'pillar', speed: 115, gap: 190,
         cards: [
           {
-            title: 'Монумент Матери-Покровительнице',
-            text: 'В Чебоксарах над Волгой стоит огромная статуя женщины с раскинутыми руками. Кажется, будто она обнимает город и всех, кто в нём живёт.\n\nВысота памятника вместе с постаментом — 46 метров, почти как дом в 15 этажей. Его открыли в 2003 году.',
-            image: 'img/cards/mother.svg'
+            title: 'Космическая родина',
+            text: 'Чувашия — родина Андрияна Николаева, третьего советского космонавта. Он стал первым в мире, кто отвязался от кресла в невесомости и парил внутри корабля, а ещё первым спел в космосе песню!',
+            image: 'img/cards/cosmonaut.svg'
           },
           {
-            title: 'Край ста тысяч вышивок',
-            text: 'Чувашию называют краем ста тысяч слов, ста тысяч песен и ста тысяч вышивок.\n\nВ старинных красных узорах прячутся знаки солнца, звёзд и древа жизни. Древо жизни и три звезды есть даже на флаге Чувашии.',
-            image: 'img/cards/embroidery.svg'
+            title: 'Дерево-великан',
+            text: 'В чувашском лесу растёт Старейшина чувашских дубов. Ему больше 420 лет! Чтобы обнять его огромный ствол, понадобится целая цепочка из 4–5 детей.',
+            image: 'img/cards/oak.svg'
           }
         ]
       },
       {
         id: 'komi', name: 'Коми', nameTo: 'в Коми',
-        tagline: 'Уральские горы и каменные великаны',
-        scene: 'ural', obstacle: 'rock', speed: 122, gap: 180,
+        scene: 'ural', color: '#7B4DFF', obstacle: 'rock', speed: 122, gap: 180,
         cards: [
           {
             title: 'Югыд ва и Уральские горы',
@@ -52,8 +50,7 @@
       },
       {
         id: 'buryatia', name: 'Бурятия', nameTo: 'в Бурятию',
-        tagline: 'Байкал и старейший заповедник страны',
-        scene: 'baikal', obstacle: 'ice', speed: 130, gap: 172,
+        scene: 'baikal', color: '#1F86FF', obstacle: 'ice', speed: 130, gap: 172,
         cards: [
           {
             title: 'Озеро Байкал',
@@ -106,8 +103,8 @@
       id: str(raw.id, 'region-' + index),
       name: name,
       nameTo: str(raw.nameTo, ''),
-      tagline: str(raw.tagline, ''),
       scene: SCENES.indexOf(raw.scene) !== -1 ? raw.scene : SCENES[index % SCENES.length],
+      color: /^#[0-9a-f]{6}$/i.test(raw.color) ? raw.color : COLORS[index % COLORS.length],
       obstacle: OBSTACLES.indexOf(raw.obstacle) !== -1 ? raw.obstacle : OBSTACLES[index % OBSTACLES.length],
       speed: num(raw.speed, 120, 70, 220),
       gap: num(raw.gap, 180, 140, 260),
@@ -121,11 +118,9 @@
     var regions = raw.regions.map(normalizeRegion).filter(Boolean);
     if (!regions.length) return null;
     var coin = raw.coin && typeof raw.coin === 'object' ? raw.coin : {};
-    var intro = (Array.isArray(raw.intro) ? raw.intro : []).map(function (line) { return str(line, ''); }).filter(Boolean).slice(0, 2);
     return {
       title: str(raw.title, DEFAULT_CONTENT.title),
       subtitle: str(raw.subtitle, DEFAULT_CONTENT.subtitle),
-      intro: intro.length ? intro : DEFAULT_CONTENT.intro,
       pointsPerCard: Math.round(num(raw.pointsPerCard, 10, 1, 50)),
       coin: {
         chance: num(coin.chance, 0.35, 0, 1),

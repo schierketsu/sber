@@ -189,206 +189,357 @@
     g.stroke();
   }
 
-  /* Чувашский орнамент: цепочка ромбов между двумя чёрными линиями. */
-  function ornamentBand(g, x, y, w, h, step) {
-    g.fillStyle = '#f6eedf';
-    g.fillRect(x, y, w, h);
-    g.fillStyle = '#2b1d1d';
-    g.fillRect(x, y, w, 1.6);
-    g.fillRect(x, y + h - 1.6, w, 1.6);
-    var cy = y + h / 2;
-    var ry = h / 2 - 4;
-    for (var cx = x + step / 2; cx < x + w; cx += step) {
-      var rx = step * 0.42;
-      g.fillStyle = '#c8312f';
+  /* ---------- приёмы «альфа»-стиля для фонов ---------- */
+
+  /* Объём холма: сверху светлая кромка, ниже тело темнее — как у облаков, без белой обводки. */
+  function shadeProfile(g, f, bottom, dark, lip) {
+    g.fillStyle = dark;
+    g.beginPath();
+    g.moveTo(0, bottom);
+    for (var x = 0; x <= TILE; x += 4) g.lineTo(x, f(x) + lip);
+    g.lineTo(TILE, bottom);
+    g.closePath();
+    g.fill();
+  }
+
+  function skyRays(g, cx, cy, w, n, alpha) {
+    var r = Math.max(w, H) * 1.6;
+    g.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+    for (var i = 0; i < n; i++) {
+      var a = i / n * Math.PI * 2;
+      var d = Math.PI / n * 0.45;
       g.beginPath();
-      g.moveTo(cx - rx, cy);
-      g.lineTo(cx, cy - ry);
-      g.lineTo(cx + rx, cy);
-      g.lineTo(cx, cy + ry);
+      g.moveTo(cx, cy);
+      g.lineTo(cx + Math.cos(a - d) * r, cy + Math.sin(a - d) * r);
+      g.lineTo(cx + Math.cos(a + d) * r, cy + Math.sin(a + d) * r);
       g.closePath();
       g.fill();
-      g.fillStyle = '#f6eedf';
+    }
+  }
+
+  /* Искорки на небе: крупные — голографические, мелкие — белые. */
+  function skySparkles(g, rand, w, count, maxY, holoShare) {
+    for (var i = 0; i < count; i++) {
+      var x = rand() * w;
+      var y = 20 + rand() * maxY;
+      var r = 3 + rand() * 5;
+      if (rand() < holoShare) {
+        sparkle(g, x, y, r + 1.5, holo(g, x - r, y - r, x + r, y + r));
+      } else {
+        sparkle(g, x, y, r, 'rgba(255,255,255,0.9)');
+      }
+    }
+  }
+
+  function glossySun(g, x, y, r) {
+    sun(g, x, y, r, 'rgba(255,250,210,0.7)', '#FFFBD6', '#FFD24A');
+    g.fillStyle = 'rgba(240,150,0,0.25)';
+    g.beginPath();
+    g.arc(x, y, r, 0.1 * Math.PI, 0.9 * Math.PI);
+    g.arc(x, y + r * 0.25, r * 0.85, 0.85 * Math.PI, 0.15 * Math.PI, true);
+    g.closePath();
+    g.fill();
+    gloss(g, x - r * 0.35, y - r * 0.4, r * 0.3, r * 0.16, -0.6, 0.8);
+  }
+
+  /* Надутое дерево: крона из нескольких долей, тёмная копия ниже даёт объём, блик сверху. */
+  function blobTree(g, x, base, s, c0, c1) {
+    var parts = [[0, -27, 12.5], [-10, -20, 10], [10, -20, 10.5], [0, -15, 11], [-4, -31, 8]];
+    g.fillStyle = '#7A4220';
+    roundRect(g, x - 2.2 * s, base - 15 * s, 4.4 * s, 15 * s, 2 * s);
+    g.fill();
+    g.fillStyle = '#A0622E';
+    roundRect(g, x - 2.2 * s, base - 15 * s, 2.6 * s, 15 * s, 1.4 * s);
+    g.fill();
+    g.fillStyle = 'rgba(10,90,40,0.55)';
+    parts.forEach(function (p) { circle(g, x + p[0] * s + 1.5 * s, base + p[1] * s + 3 * s, p[2] * s); });
+    var gr = g.createLinearGradient(0, base - 40 * s, 0, base - 6 * s);
+    gr.addColorStop(0, c0);
+    gr.addColorStop(1, c1);
+    g.fillStyle = gr;
+    parts.forEach(function (p) { circle(g, x + p[0] * s, base + p[1] * s, p[2] * s); });
+    gloss(g, x - 6 * s, base - 32 * s, 4.6 * s, 2.2 * s, -0.5, 0.6);
+    gloss(g, x + 9 * s, base - 23 * s, 2.4 * s, 1.2 * s, -0.5, 0.45);
+  }
+
+  /* Цветок-наклейка для луга. */
+  function flower(g, x, y, r, petal) {
+    for (var i = 0; i < 5; i++) {
+      var a = i / 5 * Math.PI * 2;
+      g.fillStyle = petal;
+      circle(g, x + Math.cos(a) * r, y + Math.sin(a) * r, r * 0.85);
+    }
+    g.fillStyle = '#FFC21A';
+    circle(g, x, y, r * 0.7);
+  }
+
+  /* Надутая ёлка из трёх ярусов: тень со сдвигом, градиент, блик, снег по желанию. */
+  function puffFir(g, x, base, h, c0, c1, snow) {
+    var tiers = [[0, 0.58, 0.2], [0.24, 0.82, 0.28], [0.46, 1.04, 0.36]];
+    function tier(t, pad) {
+      var apex = base - h + t[0] * h - pad;
+      var bottom = base - h + t[1] * h + pad * 0.6;
+      var hw = h * t[2] + pad;
       g.beginPath();
-      g.moveTo(cx - rx * 0.4, cy);
-      g.lineTo(cx, cy - ry * 0.4);
-      g.lineTo(cx + rx * 0.4, cy);
-      g.lineTo(cx, cy + ry * 0.4);
+      g.moveTo(x, apex);
+      g.quadraticCurveTo(x + hw * 0.35, apex + (bottom - apex) * 0.45, x + hw, bottom - 2);
+      g.quadraticCurveTo(x + hw, bottom + 1, x + hw - 3, bottom + 1);
+      g.lineTo(x - hw + 3, bottom + 1);
+      g.quadraticCurveTo(x - hw, bottom + 1, x - hw, bottom - 2);
+      g.quadraticCurveTo(x - hw * 0.35, apex + (bottom - apex) * 0.45, x, apex);
       g.closePath();
+    }
+    g.save();
+    g.translate(1.6, 2.4);
+    g.fillStyle = 'rgba(5,60,40,0.5)';
+    tiers.forEach(function (t) { tier(t, 0); g.fill(); });
+    g.restore();
+    var gr = g.createLinearGradient(0, base - h, 0, base);
+    gr.addColorStop(0, c0);
+    gr.addColorStop(1, c1);
+    tiers.forEach(function (t) {
+      tier(t, 0);
+      g.fillStyle = gr;
       g.fill();
-      g.fillStyle = '#2b1d1d';
-      circle(g, cx, cy, Math.max(1, ry * 0.14));
+      if (snow) {
+        var apex = base - h + t[0] * h;
+        var hw = h * t[2];
+        g.fillStyle = '#ffffff';
+        g.beginPath();
+        g.moveTo(x, apex);
+        g.quadraticCurveTo(x + hw * 0.3, apex + h * 0.12, x + hw * 0.45, apex + h * 0.2);
+        g.quadraticCurveTo(x, apex + h * 0.13, x - hw * 0.45, apex + h * 0.2);
+        g.quadraticCurveTo(x - hw * 0.3, apex + h * 0.12, x, apex);
+        g.fill();
+      }
+    });
+    gloss(g, x - h * 0.1, base - h * 0.62, h * 0.035, h * 0.1, 0.4, 0.6);
+    gloss(g, x - h * 0.15, base - h * 0.3, h * 0.04, h * 0.11, 0.4, 0.5);
+  }
+
+  /* Каменный великан Маньпупунёра: «шея», «голова», глянец, тень, лицо по желанию. */
+  function stonePillar(g, x, base, w, h, tilt, face) {
+    g.save();
+    g.translate(x, base);
+    g.rotate(tilt);
+    function path(pad) {
+      g.beginPath();
+      g.moveTo(-w / 2 - pad, pad);
+      g.bezierCurveTo(-w / 2 - 1 - pad, -h * 0.3, -w * 0.3 - pad, -h * 0.5, -w * 0.32 - pad, -h * 0.6);
+      g.bezierCurveTo(-w * 0.34 - pad, -h * 0.72, -w * 0.55 - pad, -h * 0.8, -w * 0.42 - pad, -h * 0.94 - pad * 0.5);
+      g.quadraticCurveTo(0, -h - 3 - pad, w * 0.42 + pad, -h * 0.92 - pad * 0.5);
+      g.bezierCurveTo(w * 0.55 + pad, -h * 0.8, w * 0.34 + pad, -h * 0.72, w * 0.32 + pad, -h * 0.6);
+      g.bezierCurveTo(w * 0.3 + pad, -h * 0.5, w / 2 + 1 + pad, -h * 0.3, w / 2 + pad, pad);
+      g.closePath();
+    }
+    g.save();
+    g.translate(w * 0.12, 2);
+    path(0);
+    g.fillStyle = 'rgba(60,30,110,0.35)';
+    g.fill();
+    g.restore();
+    var gr = g.createLinearGradient(-w / 2, 0, w / 2, 0);
+    gr.addColorStop(0, '#F6EEFF');
+    gr.addColorStop(0.5, '#BBA6E2');
+    gr.addColorStop(1, '#7A64A8');
+    path(0);
+    g.fillStyle = gr;
+    g.fill();
+    gloss(g, -w * 0.18, -h * 0.35, w * 0.08, h * 0.16, 0.05, 0.55);
+    if (face) {
+      g.strokeStyle = '#3A1C8F';
+      g.lineWidth = Math.max(1, w * 0.07);
+      g.lineCap = 'round';
+      [-1, 1].forEach(function (side) {
+        g.beginPath();
+        g.arc(side * w * 0.15, -h * 0.8, w * 0.07, 0.15 * Math.PI, 0.85 * Math.PI);
+        g.stroke();
+      });
+      g.fillStyle = 'rgba(255,111,181,0.7)';
+      ellipse(g, -w * 0.25, -h * 0.74, w * 0.08, w * 0.05);
+      ellipse(g, w * 0.25, -h * 0.74, w * 0.08, w * 0.05);
+    }
+    g.restore();
+  }
+
+  function aurora(g, w, colors) {
+    g.lineCap = 'round';
+    var widths = [30, 16, 6];
+    var alphas = [0.08, 0.13, 0.28];
+    for (var k = 0; k < colors.length; k++) {
+      for (var j = 0; j < widths.length; j++) {
+        g.strokeStyle = 'rgba(' + colors[k] + ',' + alphas[j] + ')';
+        g.lineWidth = widths[j];
+        g.beginPath();
+        for (var x = -20; x <= w + 20; x += 8) {
+          var y = 70 + k * 34 + Math.sin(x * 0.012 + k * 1.7) * 18 + Math.sin(x * 0.031 + k) * 6;
+          if (x === -20) g.moveTo(x, y); else g.lineTo(x, y);
+        }
+        g.stroke();
+      }
     }
   }
 
   /* ---------- сцены регионов ---------- */
 
   var SCENES = {
-    /* Чувашия: летняя Волга, холмы, поля, вышитая земля */
+    /* Чувашия: летнее небо от голубого к солнечному, мятные дали, глянцевая Волга, лаймовые холмы, луг */
     volga: {
-      sky: function (g, w) {
-        g.fillStyle = vGradient(g, 0, H, [[0, '#58b7f2'], [0.5, '#a9defc'], [0.8, '#fff0c9'], [1, '#ffe0a3']]);
+      sky: function (g, w, rand) {
+        g.fillStyle = vGradient(g, 0, H, [[0, '#36C2FF'], [0.6, '#A6EBFF'], [1, '#FFF3A6']]);
         g.fillRect(0, 0, w, H);
-        sun(g, w * 0.74, 118, 30, 'rgba(255,240,170,0.6)', '#fff6c4', '#ffd45c');
+        skyRays(g, w * 0.72, 120, w, 14, 0.12);
+        glossySun(g, w * 0.72, 120, 30);
+        skySparkles(g, rand, w, 10, 270, 0.35);
       },
       layers: [
         {
           top: 40, h: 240, factor: 0.05,
-          draw: function (g, rand) { clouds(g, rand, 6, 90, 230, '#ffffff', 'rgba(140,185,220,0.35)'); }
+          draw: function (g, rand) { clouds(g, rand, 6, 90, 230, '#ffffff', 'rgba(90,150,255,0.28)'); }
         },
         {
-          top: 360, h: 140, factor: 0.12,
+          top: 360, h: 142, factor: 0.12,
           draw: function (g, rand) {
-            var f = profile(rand, 7, 394, 430, true);
-            g.fillStyle = '#a3cfb3';
+            var f = profile(rand, 7, 396, 432, true);
+            g.fillStyle = '#E4FFF0';
             fillProfile(g, f, 470);
+            shadeProfile(g, f, 470, vGradient(g, 396, 470, [[0, '#B4F2D2'], [1, '#6FD3A8']]), 5);
             // далёкий город и монумент над Волгой
             var x0 = TILE * 0.3;
             var y0 = f(x0) + 2;
-            g.fillStyle = '#d6e3e4';
+            g.fillStyle = 'rgba(255,255,255,0.9)';
             for (var i = 0; i < 9; i++) {
               var bx = x0 + 14 + i * 9;
               var bh = 5 + ((i * 7) % 5) * 2.4;
               g.fillRect(bx, f(bx) + 3 - bh, 7, bh);
             }
-            g.fillStyle = '#efe9dc';
-            g.fillRect(x0 - 2, y0 - 24, 4, 24);
-            g.fillStyle = '#d4a640';
+            g.fillStyle = '#ffffff';
+            g.fillRect(x0 - 3, y0 - 25, 6, 26);
+            g.fillStyle = '#FFC21A';
             g.beginPath();
-            g.moveTo(x0, y0 - 37);
-            g.lineTo(x0 + 3.4, y0 - 24);
-            g.lineTo(x0 - 3.4, y0 - 24);
+            g.moveTo(x0, y0 - 38);
+            g.lineTo(x0 + 4, y0 - 24);
+            g.lineTo(x0 - 4, y0 - 24);
             g.closePath();
             g.fill();
             g.beginPath();
-            g.moveTo(x0 - 10, y0 - 27);
-            g.lineTo(x0, y0 - 33);
-            g.lineTo(x0 + 10, y0 - 27);
-            g.lineTo(x0 + 9, y0 - 25.5);
+            g.moveTo(x0 - 11, y0 - 26);
+            g.lineTo(x0, y0 - 34);
+            g.lineTo(x0 + 11, y0 - 26);
+            g.lineTo(x0 + 9, y0 - 24.5);
             g.lineTo(x0, y0 - 30);
-            g.lineTo(x0 - 9, y0 - 25.5);
+            g.lineTo(x0 - 9, y0 - 24.5);
             g.closePath();
             g.fill();
-            circle(g, x0, y0 - 38.5, 1.8);
-            // Волга
-            g.fillStyle = vGradient(g, 452, 500, [[0, '#8fd0ef'], [1, '#68b6df']]);
-            g.fillRect(0, 452, TILE, 48);
-            g.fillStyle = 'rgba(255,255,255,0.5)';
-            for (var k = 0; k < 28; k++) {
+            circle(g, x0, y0 - 39.5, 2);
+            // глянцевая Волга
+            g.fillStyle = vGradient(g, 452, 502, [[0, '#7DF3FF'], [1, '#2E8BFF']]);
+            g.fillRect(0, 452, TILE, 50);
+            g.fillStyle = 'rgba(20,90,200,0.25)';
+            g.fillRect(0, 452, TILE, 5);
+            g.fillStyle = 'rgba(255,255,255,0.7)';
+            for (var k = 0; k < 26; k++) {
               var len = 10 + rand() * 26;
-              g.fillRect(rand() * (TILE - len), 457 + rand() * 38, len, 1.6);
+              roundRect(g, rand() * (TILE - len), 458 + rand() * 38, len, 2.4, 1.2);
+              g.fill();
             }
           }
         },
         {
-          top: 440, h: 140, factor: 0.28,
+          top: 430, h: 150, factor: 0.28,
           draw: function (g, rand) {
-            var f = profile(rand, 5, 478, 506, true);
-            g.fillStyle = '#71bd5e';
+            var f = profile(rand, 5, 482, 508, true);
+            g.fillStyle = '#F4FF9A';
             fillProfile(g, f, 580);
+            shadeProfile(g, f, 580, vGradient(g, 476, 580, [[0, '#C8F55A'], [1, '#34C04A']]), 6);
             var i;
-            g.fillStyle = 'rgba(240,214,100,0.6)';
-            for (i = 0; i < 5; i++) {
+            g.fillStyle = 'rgba(255,228,92,0.85)';
+            for (i = 0; i < 4; i++) {
               wrapped(rand() * TILE, 60, function (x) {
                 g.beginPath();
-                g.moveTo(x, f(x) + 7);
-                g.lineTo(x + 52, f(x + 52) + 7);
-                g.lineTo(x + 46, f(x + 46) + 24);
-                g.lineTo(x - 6, f(x - 6) + 24);
+                g.moveTo(x, f(x) + 9);
+                g.lineTo(x + 52, f(x + 52) + 9);
+                g.lineTo(x + 46, f(x + 46) + 25);
+                g.lineTo(x - 6, f(x - 6) + 25);
                 g.closePath();
                 g.fill();
               });
             }
             for (i = 0; i < 3; i++) {
-              wrapped(rand() * TILE, 12, function (x) {
+              wrapped(rand() * TILE, 14, function (x) {
                 var y = f(x) + 5;
-                g.fillStyle = '#e2b07a';
+                g.fillStyle = '#FFD3A8';
                 g.fillRect(x - 8, y - 12, 16, 12);
-                g.fillStyle = '#b8452f';
+                g.fillStyle = 'rgba(160,70,20,0.25)';
+                g.fillRect(x + 1, y - 12, 7, 12);
+                g.fillRect(x - 8, y - 12, 16, 2.5);
+                g.fillStyle = '#FF7A3D';
                 g.beginPath();
                 g.moveTo(x - 10, y - 12);
-                g.lineTo(x, y - 21);
+                g.lineTo(x, y - 21.5);
                 g.lineTo(x + 10, y - 12);
                 g.closePath();
                 g.fill();
-                g.fillStyle = '#7fc3e8';
+                g.fillStyle = '#7DF3FF';
                 g.fillRect(x - 3, y - 9, 6, 5);
               });
             }
-            for (i = 0; i < 14; i++) {
-              var r = 7 + rand() * 5;
-              wrapped(rand() * TILE, r + 2, function (x) {
-                var y = f(x) + 3;
-                g.fillStyle = '#6b4a2b';
-                g.fillRect(x - 1.3, y - r * 0.7, 2.6, r * 0.8);
-                g.fillStyle = '#3f8f48';
-                circle(g, x, y - r * 1.15, r);
-                g.fillStyle = 'rgba(255,255,255,0.13)';
-                circle(g, x - r * 0.3, y - r * 1.45, r * 0.5);
-              });
+            // рощи по 2–3 дерева
+            for (i = 0; i < 4; i++) {
+              var cx = rand() * TILE;
+              var n = 2 + Math.floor(rand() * 2);
+              for (var k = 0; k < n; k++) {
+                var tx = cx + k * 20 + rand() * 6;
+                var ts = 0.75 + rand() * 0.35;
+                wrapped(tx, 28, function (x) { blobTree(g, x, f(x) + 4, ts, '#C8FF5A', '#1FAE4B'); });
+              }
             }
           }
         },
         {
-          top: 500, h: 80, factor: 0.5,
+          top: 470, h: 110, factor: 0.5,
           draw: function (g, rand) {
-            var f = profile(rand, 9, 534, 552, true);
-            g.fillStyle = '#3f9147';
+            var f = profile(rand, 6, 540, 556, true);
+            g.fillStyle = '#9DF5A8';
             fillProfile(g, f, 580);
-            for (var i = 0; i < 16; i++) {
-              var r = 8 + rand() * 8;
-              wrapped(rand() * TILE, r, function (x) {
-                var y = f(x) + 5;
-                g.fillStyle = '#37803f';
-                circle(g, x, y, r);
-                g.fillStyle = '#4aa253';
-                circle(g, x - r * 0.15, y - r * 0.2, r * 0.8);
-              });
+            shadeProfile(g, f, 580, vGradient(g, 536, 580, [[0, '#55DC74'], [1, '#1E9E48']]), 5);
+            for (var i = 0; i < 3; i++) {
+              var ts = 1.25 + rand() * 0.35;
+              wrapped(rand() * TILE, 34, function (x) { blobTree(g, x, f(x) + 6, ts, '#B6FF5A', '#159E4A'); });
             }
           }
         }
       ],
-      ground: function (g) {
-        g.fillStyle = '#f6eedf';
+      ground: function (g, rand) {
+        g.fillStyle = vGradient(g, GROUND, H, [[0, '#8BE84F'], [1, '#3DB54A']]);
         g.fillRect(0, GROUND, TILE, H - GROUND);
-        g.fillStyle = '#79c64d';
-        g.fillRect(0, GROUND, TILE, 9);
-        g.fillStyle = '#5aa83a';
-        g.fillRect(0, GROUND + 8, TILE, 2.5);
-        ornamentBand(g, 0, 590, TILE, 34, 32);
+        g.fillStyle = '#C2FF7A';
+        g.fillRect(0, GROUND, TILE, 4);
+        g.fillStyle = 'rgba(20,110,40,0.25)';
+        g.fillRect(0, GROUND + 4, TILE, 3);
+        var petals = ['#ffffff', '#ffffff', '#FFB3EC', '#B9A2FF'];
+        for (var i = 0; i < 26; i++) {
+          var y = 586 + rand() * 44;
+          var r = 1.8 + rand() * 1.2;
+          var petal = petals[Math.floor(rand() * petals.length)];
+          wrapped(rand() * TILE, 6, function (x) { flower(g, x, y, r, petal); });
+        }
       }
     },
 
-    /* Коми: вечерний Урал, северное сияние, каменные столбы, тайга */
+    /* Коми: фиолетово-розовое небо, лаймовое сияние, лавандовые горы, каменные великаны, надутые ёлки */
     ural: {
       sky: function (g, w, rand) {
-        g.fillStyle = vGradient(g, 0, H, [[0, '#1d2456'], [0.45, '#4c4d8e'], [0.78, '#c792b2'], [1, '#ffc8a0']]);
+        g.fillStyle = vGradient(g, 0, H, [[0, '#2B1A8C'], [0.5, '#7B4DFF'], [1, '#FF8FD8']]);
         g.fillRect(0, 0, w, H);
-        for (var i = 0; i < 55; i++) {
-          g.fillStyle = 'rgba(255,255,255,' + (0.35 + rand() * 0.6).toFixed(2) + ')';
-          circle(g, rand() * w, rand() * H * 0.42, 0.6 + rand() * 1.2);
-        }
-        g.lineCap = 'round';
-        var widths = [30, 16, 6];
-        var alphas = [0.07, 0.11, 0.22];
-        for (var k = 0; k < 3; k++) {
-          for (var j = 0; j < widths.length; j++) {
-            g.strokeStyle = (k === 1 ? 'rgba(90,230,220,' : 'rgba(120,255,170,') + alphas[j] + ')';
-            g.lineWidth = widths[j];
-            g.beginPath();
-            for (var x = -20; x <= w + 20; x += 8) {
-              var y = 70 + k * 34 + Math.sin(x * 0.012 + k * 1.7) * 18 + Math.sin(x * 0.031 + k) * 6;
-              if (x === -20) g.moveTo(x, y); else g.lineTo(x, y);
-            }
-            g.stroke();
-          }
-        }
+        skySparkles(g, rand, w, 22, 260, 0.3);
+        aurora(g, w, ['198,255,58', '80,240,255', '198,255,58']);
       },
       layers: [
         {
           top: 150, h: 140, factor: 0.04,
           draw: function (g, rand) {
-            g.fillStyle = 'rgba(255,190,210,0.28)';
+            g.fillStyle = 'rgba(255,170,230,0.32)';
             for (var i = 0; i < 6; i++) {
               var rx = 40 + rand() * 50;
               var y = 175 + rand() * 95;
@@ -398,140 +549,124 @@
           }
         },
         {
-          top: 250, h: 270, factor: 0.1,
+          top: 250, h: 272, factor: 0.1,
           draw: function (g, rand) {
-            var f = profile(rand, 16, 300, 440, false);
-            snowyMountains(g, f, 520, vGradient(g, 300, 520, [[0, '#8f97c6'], [1, '#626c9f']]), 385);
+            var f = profile(rand, 16, 302, 440, false);
+            snowyMountains(g, f, 520, vGradient(g, 300, 520, [[0, '#F1EBFF'], [1, '#8F6BFF']]), 385);
           }
         },
         {
           top: 400, h: 170, factor: 0.2,
           draw: function (g, rand) {
-            var f = profile(rand, 5, 470, 484, true);
-            g.fillStyle = '#857a95';
+            var f = profile(rand, 5, 472, 484, true);
+            g.fillStyle = '#FBE2FF';
             fillProfile(g, f, 570);
-            // семь каменных великанов: шесть в ряд и один поодаль
-            var x0 = TILE * 0.38;
-            var spots = [0, 22, 41, 63, 84, 104, 175];
-            for (var i = 0; i < spots.length; i++) {
-              var x = x0 + spots[i] + rand() * 6;
-              var w = 11 + rand() * 7;
-              var h = 36 + rand() * 28;
-              var base = f(x) + 3;
-              var j1 = rand() * 3;
-              var j2 = rand() * 3;
-              g.beginPath();
-              g.moveTo(x - w / 2, base);
-              g.lineTo(x - w / 2 - 1 + j1, base - h * 0.35);
-              g.lineTo(x - w / 2 + 2, base - h * 0.72);
-              g.lineTo(x - w * 0.28, base - h);
-              g.lineTo(x + w * 0.22, base - h - 2);
-              g.lineTo(x + w / 2 - 1, base - h * 0.62);
-              g.lineTo(x + w / 2 + 1 - j2, base - h * 0.3);
-              g.lineTo(x + w / 2, base);
-              g.closePath();
-              g.fillStyle = '#a99aa0';
-              g.fill();
-              g.save();
-              g.clip();
-              g.fillStyle = 'rgba(55,35,60,0.28)';
-              g.fillRect(x + w * 0.08, base - h - 4, w, h + 6);
-              g.restore();
-            }
+            shadeProfile(g, f, 570, vGradient(g, 468, 570, [[0, '#E9B4FF'], [1, '#A86BE0']]), 5);
+            var x0 = TILE * 0.36;
+            var giants = [[0, 15, 50, -0.06, false], [22, 17, 62, 0.04, false], [44, 13, 44, -0.03, false],
+              [66, 18, 66, 0.03, true], [90, 14, 52, -0.05, false], [112, 16, 58, 0.06, false], [182, 18, 56, -0.03, true]];
+            giants.forEach(function (p) {
+              var x = x0 + p[0] + rand() * 4;
+              stonePillar(g, x, f(x) + 4, p[1], p[2], p[3], p[4]);
+            });
           }
         },
         {
           top: 420, h: 160, factor: 0.42,
           draw: function (g, rand) {
-            g.fillStyle = '#21483a';
+            g.fillStyle = vGradient(g, 556, 580, [[0, '#2FB36A'], [1, '#136B4A']]);
             g.fillRect(0, 556, TILE, 24);
             var trees = [];
-            for (var i = 0; i < 26; i++) {
-              trees.push({ x: rand() * TILE, h: 50 + rand() * 62, base: 562 + rand() * 14, dark: rand() < 0.5 });
+            for (var i = 0; i < 20; i++) {
+              trees.push({ x: rand() * TILE, h: 44 + rand() * 44, base: 566 + rand() * 10 });
             }
             trees.sort(function (a, b) { return a.base - b.base; });
             trees.forEach(function (t) {
-              wrapped(t.x, t.h * 0.4, function (x) { fir(g, x, t.base, t.h, t.dark ? '#1a3f32' : '#1f4a3a', false); });
+              wrapped(t.x, t.h * 0.4, function (x) { puffFir(g, x, t.base, t.h, '#9BFF6B', '#109A48', false); });
             });
           }
         }
       ],
       ground: function (g, rand) {
-        g.fillStyle = vGradient(g, GROUND, H, [[0, '#5a6440'], [1, '#434b31']]);
+        g.fillStyle = vGradient(g, GROUND, H, [[0, '#6A4BD0'], [1, '#3B2690']]);
         g.fillRect(0, GROUND, TILE, H - GROUND);
-        g.fillStyle = '#8eaa4c';
-        g.fillRect(0, GROUND, TILE, 8);
+        g.fillStyle = vGradient(g, GROUND, GROUND + 9, [[0, '#C6FF3A'], [1, '#6CD13B']]);
+        g.fillRect(0, GROUND, TILE, 9);
+        g.fillStyle = 'rgba(20,10,70,0.3)';
+        g.fillRect(0, GROUND + 9, TILE, 3);
         var i;
-        for (i = 0; i < 18; i++) {
+        for (i = 0; i < 16; i++) {
           var rx = 5 + rand() * 7;
           var ry = 3 + rand() * 3;
-          var y = 590 + rand() * 40;
-          wrapped(rand() * TILE, rx, function (x) {
-            g.fillStyle = '#8e9088';
+          var y = 592 + rand() * 38;
+          wrapped(rand() * TILE, rx + 2, function (x) {
+            g.fillStyle = 'rgba(30,10,80,0.45)';
+            ellipse(g, x + 1, y + 1.6, rx, ry);
+            g.fillStyle = '#CDB8FF';
             ellipse(g, x, y, rx, ry);
-            g.fillStyle = 'rgba(255,255,255,0.2)';
-            ellipse(g, x - rx * 0.25, y - ry * 0.3, rx * 0.5, ry * 0.4);
+            gloss(g, x - rx * 0.3, y - ry * 0.35, rx * 0.4, ry * 0.3, 0, 0.7);
           });
         }
-        g.fillStyle = 'rgba(200,208,122,0.75)';
-        for (i = 0; i < 44; i++) {
-          var lx = rand() * (TILE - 4) + 2;
-          circle(g, lx, 582 + rand() * 54, 1 + rand() * 1.2);
+        g.fillStyle = 'rgba(198,255,58,0.85)';
+        for (i = 0; i < 40; i++) {
+          circle(g, rand() * (TILE - 4) + 2, 584 + rand() * 52, 1 + rand() * 1.2);
         }
       }
     },
 
-    /* Бурятия: зимний Байкал, прозрачный лёд, нерпа, снежные сосны */
+    /* Бурятия: ярко-голубое небо, глянцевый лёд Байкала, надутые сосны в снегу, нерпа */
     baikal: {
-      sky: function (g, w) {
-        g.fillStyle = vGradient(g, 0, H, [[0, '#0f62c6'], [0.5, '#57b4f2'], [0.85, '#cbedff'], [1, '#eef9ff']]);
+      sky: function (g, w, rand) {
+        g.fillStyle = vGradient(g, 0, H, [[0, '#2E6BFF'], [0.55, '#3FB8FF'], [1, '#9AF4FF']]);
         g.fillRect(0, 0, w, H);
-        sun(g, w * 0.22, 96, 24, 'rgba(255,255,255,0.7)', '#ffffff', '#fff3cf');
+        skyRays(g, w * 0.22, 96, w, 12, 0.1);
+        glossySun(g, w * 0.22, 96, 24);
+        skySparkles(g, rand, w, 14, 280, 0.2);
       },
       layers: [
         {
           top: 40, h: 220, factor: 0.05,
-          draw: function (g, rand) { clouds(g, rand, 4, 90, 220, '#ffffff', 'rgba(120,170,220,0.3)'); }
+          draw: function (g, rand) { clouds(g, rand, 4, 90, 220, '#ffffff', 'rgba(90,140,255,0.3)'); }
         },
         {
           top: 320, h: 160, factor: 0.1,
           draw: function (g, rand) {
-            var f = profile(rand, 13, 350, 428, false);
-            snowyMountains(g, f, 470, vGradient(g, 350, 470, [[0, '#6b92c8'], [1, '#4d78b3']]), 405);
+            var f = profile(rand, 13, 352, 428, false);
+            snowyMountains(g, f, 470, vGradient(g, 350, 470, [[0, '#E8F2FF'], [1, '#7FA8F5']]), 405);
           }
         },
         {
           top: 440, h: 120, factor: 0.24,
           draw: function (g, rand) {
-            g.fillStyle = vGradient(g, 455, 556, [[0, '#aee8f4'], [1, '#62c3de']]);
+            g.fillStyle = vGradient(g, 455, 556, [[0, '#C9FAFF'], [1, '#4FD3F0']]);
             g.fillRect(0, 455, TILE, 101);
-            g.fillStyle = 'rgba(255,255,255,0.65)';
-            g.fillRect(0, 455, TILE, 2);
+            g.fillStyle = 'rgba(30,120,200,0.22)';
+            g.fillRect(0, 455, TILE, 5);
             var i;
-            for (i = 0; i < 14; i++) {
+            for (i = 0; i < 12; i++) {
               var cy = 464 + rand() * 76;
               var seed = Math.floor(rand() * 100000);
-              wrapped(rand() * TILE, 120, function (x) { crack(g, rng(seed), x, cy, 5, 'rgba(255,255,255,0.55)', 1.2); });
+              wrapped(rand() * TILE, 120, function (x) { crack(g, rng(seed), x, cy, 5, 'rgba(255,255,255,0.75)', 1.4); });
             }
-            for (i = 0; i < 8; i++) {
-              var hy = 472 + rand() * 60;
-              var hs = 0.7 + rand() * 0.6;
-              wrapped(rand() * TILE, 20, function (x) {
+            for (i = 0; i < 7; i++) {
+              var hy = 474 + rand() * 56;
+              var hs = 0.8 + rand() * 0.5;
+              wrapped(rand() * TILE, 22, function (x) {
                 for (var k = 0; k < 3; k++) {
                   var px = x + (k - 1) * 8 * hs;
-                  var ph = (10 + (k === 1 ? 6 : 0)) * hs;
-                  g.fillStyle = '#d8f7fd';
+                  var ph = (10 + (k === 1 ? 7 : 0)) * hs;
+                  g.fillStyle = '#9FF1FF';
                   g.beginPath();
                   g.moveTo(px - 6 * hs, hy);
                   g.lineTo(px, hy - ph);
                   g.lineTo(px + 6 * hs, hy);
                   g.closePath();
                   g.fill();
-                  g.fillStyle = 'rgba(80,170,205,0.45)';
+                  g.fillStyle = 'rgba(40,150,220,0.45)';
                   g.beginPath();
                   g.moveTo(px, hy - ph);
                   g.lineTo(px + 6 * hs, hy);
-                  g.lineTo(px + 1 * hs, hy);
+                  g.lineTo(px + hs, hy);
                   g.closePath();
                   g.fill();
                 }
@@ -539,39 +674,44 @@
             }
             // нерпа на льду
             var nx = TILE * 0.62;
-            var ny = 508;
-            g.fillStyle = 'rgba(40,90,120,0.25)';
-            ellipse(g, nx, ny + 6, 15, 3);
-            g.fillStyle = '#7d8796';
-            ellipse(g, nx, ny, 13, 6.5);
-            g.fillStyle = '#8b95a4';
-            circle(g, nx + 10, ny - 4, 5.6);
-            g.fillStyle = '#1d2530';
-            circle(g, nx + 8.6, ny - 5, 1);
-            circle(g, nx + 12, ny - 5, 1);
-            circle(g, nx + 10.3, ny - 2.8, 0.8);
+            var ny = 506;
+            g.fillStyle = 'rgba(30,110,170,0.3)';
+            ellipse(g, nx + 1, ny + 5, 16, 3.6);
+            var seal = g.createLinearGradient(0, ny - 12, 0, ny + 7);
+            seal.addColorStop(0, '#F2F4FF');
+            seal.addColorStop(1, '#8792CC');
+            g.fillStyle = seal;
+            ellipse(g, nx, ny, 14, 7);
+            circle(g, nx + 11, ny - 5, 6.2);
+            g.fillStyle = '#2A1450';
+            circle(g, nx + 9.2, ny - 6, 1.3);
+            circle(g, nx + 13.2, ny - 6, 1.3);
+            g.fillStyle = 'rgba(255,111,181,0.7)';
+            circle(g, nx + 7.6, ny - 3.6, 1);
+            circle(g, nx + 14.8, ny - 3.6, 1);
           }
         },
         {
           top: 490, h: 90, factor: 0.48,
           draw: function (g, rand) {
-            var f = profile(rand, 8, 534, 552, true);
-            g.fillStyle = '#f3f9ff';
+            var f = profile(rand, 8, 536, 552, true);
+            g.fillStyle = '#FFFFFF';
             fillProfile(g, f, 580);
-            g.fillStyle = '#d9e9f7';
-            g.fillRect(0, 568, TILE, 12);
+            shadeProfile(g, f, 580, vGradient(g, 530, 580, [[0, '#E6F0FF'], [1, '#C4D8F5']]), 5);
             for (var i = 0; i < 10; i++) {
-              var h = 40 + rand() * 40;
-              wrapped(rand() * TILE, h * 0.4, function (x) { fir(g, x, f(x) + 6, h, '#2b5b4d', true); });
+              var h = 42 + rand() * 40;
+              wrapped(rand() * TILE, h * 0.4, function (x) { puffFir(g, x, f(x) + 6, h, '#3FD4A0', '#0B7A5A', true); });
             }
           }
         }
       ],
       ground: function (g, rand) {
-        g.fillStyle = vGradient(g, GROUND, H, [[0, '#c8f1fa'], [1, '#6cc6e0']]);
+        g.fillStyle = vGradient(g, GROUND, H, [[0, '#D6FCFF'], [1, '#5FD6F2']]);
         g.fillRect(0, GROUND, TILE, H - GROUND);
-        g.fillStyle = '#effcff';
-        g.fillRect(0, GROUND, TILE, 5);
+        g.fillStyle = '#EAFDFF';
+        g.fillRect(0, GROUND, TILE, 4);
+        g.fillStyle = 'rgba(30,120,200,0.2)';
+        g.fillRect(0, GROUND + 4, TILE, 3);
         var i;
         for (i = 0; i < 20; i++) {
           var by = 596 + rand() * 32;
@@ -580,10 +720,10 @@
             for (var k = 0; k < n; k++) {
               var r = 3.4 - k * 0.45;
               if (r <= 0.8) break;
-              g.fillStyle = 'rgba(255,255,255,0.35)';
+              g.fillStyle = 'rgba(255,255,255,0.45)';
               circle(g, x + (k % 2) * 1.5, by - k * 6, r);
-              g.strokeStyle = 'rgba(255,255,255,0.85)';
-              g.lineWidth = 0.8;
+              g.strokeStyle = '#ffffff';
+              g.lineWidth = 0.9;
               g.stroke();
             }
           });
@@ -591,7 +731,7 @@
         for (i = 0; i < 6; i++) {
           var cy = 584 + rand() * 46;
           var seed = Math.floor(rand() * 100000);
-          wrapped(rand() * TILE, 120, function (x) { crack(g, rng(seed), x, cy, 5, 'rgba(255,255,255,0.6)', 1); });
+          wrapped(rand() * TILE, 120, function (x) { crack(g, rng(seed), x, cy, 5, 'rgba(255,255,255,0.75)', 1.2); });
         }
       }
     }
@@ -659,16 +799,17 @@
   /* ---------- препятствия ---------- */
 
   var OBSTACLES = {
+    /* Чувашия: глянцевый деревянный столб с золотой шапкой */
     pillar: function (g) {
       var w = OB_W + CAP * 2;
       var body = g.createLinearGradient(CAP, 0, CAP + OB_W, 0);
-      body.addColorStop(0, '#b88a52');
-      body.addColorStop(0.35, '#efd5a5');
-      body.addColorStop(0.7, '#e1bf86');
-      body.addColorStop(1, '#a87a45');
+      body.addColorStop(0, '#E8A55E');
+      body.addColorStop(0.35, '#FFE2B0');
+      body.addColorStop(0.7, '#FBCB8A');
+      body.addColorStop(1, '#D98D47');
       g.fillStyle = body;
       g.fillRect(CAP, 0, OB_W, H);
-      g.strokeStyle = 'rgba(110,70,30,0.18)';
+      g.strokeStyle = 'rgba(150,80,20,0.16)';
       g.lineWidth = 1;
       for (var i = 0; i < 7; i++) {
         var gx = CAP + 6 + i * 8.5;
@@ -677,17 +818,21 @@
         for (var y = 0; y <= H; y += 20) g.lineTo(gx + Math.sin(y * 0.05 + i) * 1.5, y);
         g.stroke();
       }
-      for (var by = 52; by < H; by += 96) ornamentBand(g, CAP, by, OB_W, 24, 16);
-      roundRect(g, 0, 0, w, 22, 5);
-      g.fillStyle = '#9c6a36';
+      g.fillStyle = 'rgba(255,255,255,0.5)';
+      roundRect(g, CAP + 9, 30, 6, H - 40, 3);
       g.fill();
-      g.fillStyle = '#c8312f';
-      g.fillRect(0, 8, w, 5);
-      g.fillStyle = 'rgba(255,255,255,0.25)';
-      g.fillRect(3, 2, w - 6, 3);
-      g.fillStyle = 'rgba(0,0,0,0.22)';
-      g.fillRect(2, 19, w - 4, 3);
+      g.fillStyle = 'rgba(120,60,10,0.3)';
+      roundRect(g, 0, 4, w, 20, 7);
+      g.fill();
+      var cap = g.createLinearGradient(0, 0, 0, 20);
+      cap.addColorStop(0, '#FFE680');
+      cap.addColorStop(1, '#FFA41C');
+      g.fillStyle = cap;
+      roundRect(g, 0, 0, w, 20, 7);
+      g.fill();
+      gloss(g, w * 0.32, 7, w * 0.22, 2.2, 0, 0.7);
     },
+    /* Коми: лиловый камень как на открытке Маньпупунёра, с лишайником */
     rock: function (g) {
       var r = rng(31);
       var w = OB_W + CAP * 2;
@@ -697,20 +842,23 @@
         left.push([CAP + 2 + r() * 6, y]);
         right.push([CAP + OB_W - 2 - r() * 6, y]);
       }
-      g.beginPath();
-      g.moveTo(left[0][0], left[0][1]);
-      left.forEach(function (p) { g.lineTo(p[0], p[1]); });
-      right.slice().reverse().forEach(function (p) { g.lineTo(p[0], p[1]); });
-      g.closePath();
+      function outline() {
+        g.beginPath();
+        g.moveTo(left[0][0], left[0][1]);
+        left.forEach(function (p) { g.lineTo(p[0], p[1]); });
+        right.slice().reverse().forEach(function (p) { g.lineTo(p[0], p[1]); });
+        g.closePath();
+      }
+      outline();
       var body = g.createLinearGradient(CAP, 0, CAP + OB_W, 0);
-      body.addColorStop(0, '#8a786a');
-      body.addColorStop(0.4, '#b4a292');
-      body.addColorStop(1, '#6f5f53');
+      body.addColorStop(0, '#F1E8FF');
+      body.addColorStop(0.45, '#BBA6E2');
+      body.addColorStop(1, '#7A64A8');
       g.fillStyle = body;
       g.fill();
       g.save();
       g.clip();
-      g.strokeStyle = 'rgba(60,45,35,0.28)';
+      g.strokeStyle = 'rgba(90,60,140,0.22)';
       g.lineWidth = 1.5;
       for (var sy = 30; sy < H; sy += 14 + r() * 12) {
         g.beginPath();
@@ -718,43 +866,53 @@
         for (var sx = 0; sx <= w; sx += 8) g.lineTo(sx, sy + Math.sin(sx * 0.2 + sy) * 1.8);
         g.stroke();
       }
-      g.fillStyle = 'rgba(190,200,110,0.45)';
-      for (var i = 0; i < 34; i++) circle(g, CAP + 4 + r() * (OB_W - 8), 30 + r() * (H - 40), 1.5 + r() * 2.5);
-      g.restore();
-      roundRect(g, 0, 0, w, 26, 12);
-      g.fillStyle = '#9d8b7b';
+      g.fillStyle = 'rgba(198,255,58,0.6)';
+      for (var i = 0; i < 30; i++) circle(g, CAP + 4 + r() * (OB_W - 8), 30 + r() * (H - 40), 1.4 + r() * 2.2);
+      g.fillStyle = 'rgba(255,255,255,0.45)';
+      roundRect(g, CAP + 12, 34, 6, H - 50, 3);
       g.fill();
-      g.fillStyle = 'rgba(255,255,255,0.18)';
-      ellipse(g, w * 0.4, 7, w * 0.3, 3.5);
-      g.fillStyle = 'rgba(40,30,25,0.25)';
-      g.fillRect(4, 22, w - 8, 3);
+      g.restore();
+      g.fillStyle = 'rgba(50,20,100,0.35)';
+      roundRect(g, 0, 4, w, 24, 12);
+      g.fill();
+      var cap = g.createLinearGradient(0, 0, 0, 24);
+      cap.addColorStop(0, '#F6EEFF');
+      cap.addColorStop(1, '#A08BD0');
+      g.fillStyle = cap;
+      roundRect(g, 0, 0, w, 24, 12);
+      g.fill();
+      gloss(g, w * 0.36, 8, w * 0.24, 2.6, 0, 0.75);
     },
+    /* Бурятия: глянцевая ледяная глыба со снежной шапкой */
     ice: function (g) {
       var r = rng(53);
       var w = OB_W + CAP * 2;
       var body = g.createLinearGradient(CAP, 0, CAP + OB_W, 0);
-      body.addColorStop(0, 'rgba(214,248,255,0.97)');
-      body.addColorStop(0.5, 'rgba(150,222,240,0.97)');
-      body.addColorStop(1, 'rgba(96,190,222,0.97)');
+      body.addColorStop(0, 'rgba(225,253,255,0.98)');
+      body.addColorStop(0.5, 'rgba(120,226,248,0.98)');
+      body.addColorStop(1, 'rgba(60,170,240,0.98)');
       g.fillStyle = body;
       g.fillRect(CAP, 0, OB_W, H);
-      g.fillStyle = 'rgba(255,255,255,0.45)';
+      g.fillStyle = 'rgba(255,255,255,0.55)';
       g.fillRect(CAP + 10, 0, 7, H);
-      g.fillStyle = 'rgba(255,255,255,0.22)';
+      g.fillStyle = 'rgba(255,255,255,0.28)';
       g.fillRect(CAP + 22, 0, 3, H);
-      g.fillStyle = 'rgba(40,120,160,0.22)';
+      g.fillStyle = 'rgba(30,110,200,0.22)';
       g.fillRect(CAP + OB_W - 12, 0, 2, H);
-      for (var i = 0; i < 9; i++) crack(g, r, CAP + 4, 40 + r() * (H - 60), 3, 'rgba(255,255,255,0.45)', 1);
+      for (var i = 0; i < 9; i++) crack(g, r, CAP + 4, 40 + r() * (H - 60), 3, 'rgba(255,255,255,0.5)', 1);
       for (var k = 0; k < 20; k++) {
-        g.fillStyle = 'rgba(255,255,255,0.55)';
+        g.fillStyle = 'rgba(255,255,255,0.6)';
         circle(g, CAP + 8 + r() * (OB_W - 16), 40 + r() * (H - 60), 1 + r() * 1.6);
       }
-      roundRect(g, 0, 0, w, 20, 9);
-      g.fillStyle = '#f4fcff';
+      g.fillStyle = 'rgba(40,120,220,0.35)';
+      roundRect(g, 0, 4, w, 19, 9);
+      g.fill();
+      for (var sx = 6; sx < w; sx += 12) circle(g, sx, 22, 5);
+      g.fillStyle = '#F4FCFF';
+      roundRect(g, 0, 0, w, 19, 9);
       g.fill();
       for (var bx = 6; bx < w; bx += 12) circle(g, bx, 18, 5);
-      g.fillStyle = 'rgba(120,180,210,0.35)';
-      g.fillRect(3, 21, w - 6, 2);
+      gloss(g, w * 0.3, 6, w * 0.2, 2, 0, 0.8);
     }
   };
 
@@ -786,140 +944,281 @@
   }
 
   /* ---------- самолётик с котом-пилотом ---------- */
+  /* Стиль «альфа»: надутые глянцевые формы, мягкие тени, голографический хром.
+     Неподвижные части рисуются один раз в спрайт с тенью, шарф и пропеллер — каждый кадр. */
 
-  function drawCat(g) {
-    g.fillStyle = '#f08a3c';
+  var PLANE_BOX = { x: -46, y: -44, w: 90, h: 66 };
+  var spriteCache = {};
+  var spriteKeys = [];
+
+  function gloss(g, x, y, rx, ry, rot, alpha) {
+    g.save();
+    g.translate(x, y);
+    g.rotate(rot || 0);
+    g.fillStyle = 'rgba(255,255,255,' + (alpha || 0.7) + ')';
+    ellipse(g, 0, 0, rx, ry);
+    g.restore();
+  }
+
+  function holo(g, x0, y0, x1, y1) {
+    var gr = g.createLinearGradient(x0, y0, x1, y1);
+    gr.addColorStop(0, '#E8FDFF');
+    gr.addColorStop(0.3, '#8EF1FF');
+    gr.addColorStop(0.55, '#FFB3EC');
+    gr.addColorStop(0.8, '#B9A2FF');
+    gr.addColorStop(1, '#F3EEFF');
+    return gr;
+  }
+
+  /* Четырёхлучевая искорка, как в глазах персонажей на референсах. */
+  function sparkle(g, x, y, r, color) {
+    g.fillStyle = color;
     g.beginPath();
-    g.moveTo(-10, -21); g.lineTo(-7, -33); g.lineTo(-1.5, -25);
-    g.moveTo(1.5, -25); g.lineTo(7, -33); g.lineTo(10, -21);
-    g.fill();
-    g.fillStyle = '#ffb3a7';
-    g.beginPath();
-    g.moveTo(-8, -23); g.lineTo(-6.6, -29.5); g.lineTo(-3.6, -25);
-    g.moveTo(3.6, -25); g.lineTo(6.6, -29.5); g.lineTo(8, -23);
-    g.fill();
-    g.fillStyle = '#f59a46';
-    ellipse(g, 0, -18, 11.5, 10);
-    g.strokeStyle = '#d9732a';
-    g.lineWidth = 1.4;
-    g.lineCap = 'round';
-    g.beginPath();
-    g.moveTo(-3, -27); g.lineTo(-2.4, -24.2);
-    g.moveTo(0, -27.6); g.lineTo(0, -24.6);
-    g.moveTo(3, -27); g.lineTo(2.4, -24.2);
-    g.stroke();
-    // очки лётчика на лбу
-    g.fillStyle = '#5b3a29';
-    g.fillRect(-11.2, -23.6, 22.4, 2.2);
-    g.fillStyle = '#9fe0ff';
-    g.strokeStyle = '#4a2f22';
-    g.lineWidth = 1.5;
-    [-4.6, 4.6].forEach(function (x) {
-      g.beginPath();
-      g.arc(x, -22.6, 3.6, 0, Math.PI * 2);
-      g.fill();
-      g.stroke();
-    });
-    g.fillStyle = 'rgba(255,255,255,0.8)';
-    circle(g, -5.6, -23.6, 1);
-    circle(g, 3.6, -23.6, 1);
-    // мордочка
-    g.fillStyle = '#fff3e6';
-    ellipse(g, 0, -13.2, 5.6, 3.8);
-    g.fillStyle = '#1f1a17';
-    ellipse(g, -4.2, -17, 1.7, 2.3);
-    ellipse(g, 4.2, -17, 1.7, 2.3);
-    g.fillStyle = '#ffffff';
-    circle(g, -3.7, -17.8, 0.65);
-    circle(g, 4.7, -17.8, 0.65);
-    g.fillStyle = 'rgba(255,120,120,0.35)';
-    circle(g, -7.4, -13.6, 2);
-    circle(g, 7.4, -13.6, 2);
-    g.fillStyle = '#ff7d8a';
-    g.beginPath();
-    g.moveTo(-1.3, -14.6); g.lineTo(1.3, -14.6); g.lineTo(0, -13.2);
+    g.moveTo(x, y - r);
+    g.quadraticCurveTo(x + r * 0.15, y - r * 0.15, x + r, y);
+    g.quadraticCurveTo(x + r * 0.15, y + r * 0.15, x, y + r);
+    g.quadraticCurveTo(x - r * 0.15, y + r * 0.15, x - r, y);
+    g.quadraticCurveTo(x - r * 0.15, y - r * 0.15, x, y - r);
     g.closePath();
     g.fill();
-    g.strokeStyle = 'rgba(122,74,42,0.6)';
-    g.lineWidth = 0.7;
+  }
+
+  function star5(g, x, y, r, fill, stroke) {
     g.beginPath();
-    g.moveTo(0, -13.2); g.lineTo(0, -12);
-    g.moveTo(-5, -13); g.lineTo(-12, -14.2);
-    g.moveTo(-5, -12); g.lineTo(-12, -11);
-    g.moveTo(5, -13); g.lineTo(12, -14.2);
-    g.moveTo(5, -12); g.lineTo(12, -11);
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5;
+      var rr = i % 2 ? r * 0.45 : r;
+      g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    g.closePath();
+    g.lineJoin = 'round';
+    g.strokeStyle = stroke;
+    g.lineWidth = 1.4;
     g.stroke();
+    g.fillStyle = fill;
+    g.fill();
+  }
+
+  /* Кот-пилот: голова как из глянцевой глины, огромные глаза со звёздочками, румянец. */
+  function drawCat(g) {
+    var ear = g.createLinearGradient(0, -38, 0, -22);
+    ear.addColorStop(0, '#FFB15C');
+    ear.addColorStop(1, '#F07A2A');
+    g.fillStyle = ear;
+    g.beginPath();
+    g.moveTo(-12.5, -22); g.quadraticCurveTo(-11, -34, -7.5, -37); g.quadraticCurveTo(-4, -32, -1.5, -27);
+    g.moveTo(3.5, -27); g.quadraticCurveTo(6, -32, 9.5, -37); g.quadraticCurveTo(13, -34, 14.5, -22);
+    g.fill();
+    g.fillStyle = '#FF8FC8';
+    g.beginPath();
+    g.moveTo(-10, -24.5); g.quadraticCurveTo(-9, -31.5, -7.6, -33); g.quadraticCurveTo(-5.4, -29.5, -4, -26.5);
+    g.moveTo(6, -26.5); g.quadraticCurveTo(7.4, -29.5, 9.6, -33); g.quadraticCurveTo(11, -31.5, 12, -24.5);
+    g.fill();
+
+    var head = g.createRadialGradient(-3, -25, 2, 1, -19, 15);
+    head.addColorStop(0, '#FFD08A');
+    head.addColorStop(0.55, '#FF9A3D');
+    head.addColorStop(1, '#E8641C');
+    g.fillStyle = head;
+    ellipse(g, 1, -19, 13.5, 12);
+    g.strokeStyle = 'rgba(200,80,10,0.5)';
+    g.lineWidth = 1.6;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(-2, -30.4); g.lineTo(-1.5, -28.4);
+    g.moveTo(1, -31); g.lineTo(1, -29);
+    g.moveTo(4, -30.4); g.lineTo(3.5, -28.4);
+    g.stroke();
+
+    // очки лётчика: ремешок и голографические линзы
+    g.fillStyle = '#3A1C8F';
+    g.fillRect(-12, -26, 26, 2.6);
+    [-4, 6].forEach(function (x) {
+      var rim = g.createLinearGradient(x - 4.5, -29, x + 4.5, -21);
+      rim.addColorStop(0, '#FFFFFF');
+      rim.addColorStop(1, '#9AA3C7');
+      g.fillStyle = rim;
+      circle(g, x, -24.8, 4.6);
+      g.fillStyle = holo(g, x - 3.5, -28, x + 3.5, -21);
+      circle(g, x, -24.8, 3.4);
+      gloss(g, x - 1.2, -26.2, 1.4, 0.8, -0.6, 0.9);
+    });
+
+    g.fillStyle = '#FFF4E6';
+    ellipse(g, 1, -13, 6.6, 4.4);
+    [-4.2, 6.2].forEach(function (x) {
+      var eye = g.createLinearGradient(0, -22, 0, -13);
+      eye.addColorStop(0, '#2A1450');
+      eye.addColorStop(1, '#6A3CFF');
+      g.fillStyle = eye;
+      ellipse(g, x, -17.6, 3.1, 4.1);
+      g.fillStyle = '#ffffff';
+      circle(g, x + 1, -19.2, 1.25);
+      circle(g, x - 1.1, -15.8, 0.6);
+      sparkle(g, x - 0.5, -17.8, 1.3, 'rgba(255,255,255,0.95)');
+    });
+    g.fillStyle = 'rgba(255,90,170,0.45)';
+    ellipse(g, -8.4, -12.8, 2.6, 1.6);
+    ellipse(g, 10.4, -12.8, 2.6, 1.6);
+    g.fillStyle = '#FF5FA2';
+    g.beginPath();
+    g.moveTo(-0.4, -15.2); g.lineTo(2.4, -15.2); g.lineTo(1, -13.8);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = '#5A2A1A';
+    g.lineWidth = 0.8;
+    g.beginPath();
+    g.moveTo(-1.6, -12.6);
+    g.quadraticCurveTo(-0.3, -11.3, 1, -12.8);
+    g.quadraticCurveTo(2.3, -11.3, 3.6, -12.6);
+    g.stroke();
+    gloss(g, -5.5, -28.6, 3.4, 1.6, -0.4, 0.55);
+  }
+
+  /* Неподвижная часть: хвост, кот, фюзеляж, крыло, козырёк, нос. */
+  function drawPlaneBody(g) {
+    var tail = g.createLinearGradient(-36, -26, -20, -2);
+    tail.addColorStop(0, '#FFA6E6');
+    tail.addColorStop(1, '#E5359A');
+    g.fillStyle = tail;
+    g.beginPath();
+    g.moveTo(-27, -2); g.lineTo(-36, -21); g.quadraticCurveTo(-36, -26, -30.5, -25); g.lineTo(-17, -6);
+    g.closePath();
+    g.fill();
+    gloss(g, -31, -18, 1.3, 4, -0.45, 0.6);
+
+    drawCat(g);
+
+    var body = g.createLinearGradient(0, -12, 0, 11);
+    body.addColorStop(0, '#E6FF7A');
+    body.addColorStop(0.45, '#7BEA3E');
+    body.addColorStop(1, '#16A34A');
+    g.fillStyle = body;
+    g.beginPath();
+    g.moveTo(-33, -3);
+    g.bezierCurveTo(-30, -11, 18, -13, 27, -6);
+    g.quadraticCurveTo(31, -1, 27, 5);
+    g.bezierCurveTo(16, 12, -26, 10, -33, 3);
+    g.quadraticCurveTo(-35, 0, -33, -3);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = 'rgba(210,255,160,0.7)';
+    g.lineWidth = 1.2;
+    g.beginPath();
+    g.moveTo(-26, 6.4);
+    g.bezierCurveTo(-10, 10, 12, 10, 24, 5);
+    g.stroke();
+    g.fillStyle = 'rgba(255,255,255,0.75)';
+    g.beginPath();
+    g.moveTo(-25, -5.5);
+    g.bezierCurveTo(-18, -9.5, -4, -10, 4, -9.6);
+    g.bezierCurveTo(-4, -8, -16, -7, -25, -3.6);
+    g.closePath();
+    g.fill();
+    gloss(g, 18, -7.5, 3.2, 1.3, -0.15, 0.8);
+    star5(g, -14, 1.5, 4.4, '#FFE14D', '#E89A00');
+
+    g.fillStyle = '#3A1C8F';
+    ellipse(g, 1, -9.2, 11.5, 2.6);
+
+    var wing = g.createLinearGradient(0, 1, 0, 12);
+    wing.addColorStop(0, '#FF9BE0');
+    wing.addColorStop(1, '#D92E8E');
+    g.fillStyle = wing;
+    ellipse(g, -3, 6.5, 17.5, 5.2);
+    gloss(g, -7, 4.6, 9, 1.4, 0, 0.65);
+
+    g.globalAlpha = 0.85;
+    g.fillStyle = holo(g, 9, -19, 17, -9);
+    g.beginPath();
+    g.moveTo(9, -9.6);
+    g.quadraticCurveTo(11, -19.5, 17, -10.2);
+    g.closePath();
+    g.fill();
+    g.globalAlpha = 1;
+
+    var nose = g.createRadialGradient(26, -3, 0.5, 28, -0.5, 7);
+    nose.addColorStop(0, '#FFFFFF');
+    nose.addColorStop(0.35, '#BDF6FF');
+    nose.addColorStop(0.7, '#FFB3EC');
+    nose.addColorStop(1, '#9B86FF');
+    g.fillStyle = nose;
+    ellipse(g, 28, -0.5, 5.6, 6.8);
+    g.fillStyle = '#ffffff';
+    circle(g, 33, -0.5, 2.4);
+  }
+
+  /* Спрайт под текущий масштаб: рисунок и мягкая тень под ним. */
+  function planeSprite(es) {
+    var key = es.toFixed(2);
+    if (spriteCache[key]) return spriteCache[key];
+    var b = PLANE_BOX;
+    var cw = Math.ceil(b.w * es);
+    var ch = Math.ceil(b.h * es);
+    var art = makeCanvas(cw, ch);
+    var ga = art.getContext('2d');
+    ga.setTransform(es, 0, 0, es, -b.x * es, -b.y * es);
+    drawPlaneBody(ga);
+
+    var shadow = makeCanvas(cw, ch);
+    var gsh = shadow.getContext('2d');
+    gsh.drawImage(art, 0, 0);
+    gsh.globalCompositeOperation = 'source-in';
+    gsh.fillStyle = '#2A0A5A';
+    gsh.fillRect(0, 0, cw, ch);
+
+    var sprite = makeCanvas(cw, ch);
+    var gs = sprite.getContext('2d');
+    gs.globalAlpha = 0.25;
+    gs.drawImage(shadow, 0, 3 * es);
+    gs.globalAlpha = 1;
+    gs.drawImage(art, 0, 0);
+
+    spriteCache[key] = sprite;
+    spriteKeys.push(key);
+    if (spriteKeys.length > 4) delete spriteCache[spriteKeys.shift()];
+    return sprite;
+  }
+
+  function drawScarf(g, t) {
+    var wave = Math.sin(t * 12);
+    var grad = g.createLinearGradient(-36, 0, -4, 0);
+    grad.addColorStop(0, '#FFB020');
+    grad.addColorStop(1, '#FF3DA8');
+    g.beginPath();
+    g.moveTo(-3, -13);
+    g.quadraticCurveTo(-18, -16 + wave * 3, -36, -12 + wave * 5);
+    g.quadraticCurveTo(-33, -8.5 + wave * 5, -35, -5 + wave * 5);
+    g.quadraticCurveTo(-18, -9 + wave * 2, -3, -7);
+    g.closePath();
+    g.fillStyle = grad;
+    g.fill();
+  }
+
+  function drawPropeller(g, t) {
+    var disc = g.createLinearGradient(0, -19, 0, 18);
+    disc.addColorStop(0, 'rgba(142,241,255,0.4)');
+    disc.addColorStop(0.5, 'rgba(255,179,236,0.4)');
+    disc.addColorStop(1, 'rgba(185,162,255,0.4)');
+    g.fillStyle = disc;
+    ellipse(g, 35, -0.5, 2.8, 18);
+    g.fillStyle = '#3A1C8F';
+    ellipse(g, 35, -0.5, 1.9, Math.max(2.2, 17 * Math.abs(Math.cos(t * 55))));
+    g.fillStyle = '#ffffff';
+    circle(g, 35, -0.5, 1.6);
   }
 
   function drawPlane(ctx, x, y, rot, t) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rot);
-    var wave = Math.sin(t * 12);
-    // шарф развевается позади
-    ctx.fillStyle = '#e8413c';
-    ctx.beginPath();
-    ctx.moveTo(-3, -12);
-    ctx.quadraticCurveTo(-17, -15 + wave * 3, -32, -11 + wave * 5);
-    ctx.lineTo(-30, -5 + wave * 5);
-    ctx.quadraticCurveTo(-17, -8 + wave * 2, -3, -7);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-24, -12 + wave * 4, 3, 5);
-    // хвост
-    ctx.fillStyle = '#178a33';
-    ctx.beginPath();
-    ctx.moveTo(-25, -3); ctx.lineTo(-34, -20); ctx.lineTo(-27, -21); ctx.lineTo(-17, -6);
-    ctx.closePath();
-    ctx.fill();
-    drawCat(ctx);
-    // фюзеляж
-    var body = ctx.createLinearGradient(0, -11, 0, 10);
-    body.addColorStop(0, '#45d36a');
-    body.addColorStop(1, '#1d9a3b');
-    ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.moveTo(-31, -4);
-    ctx.bezierCurveTo(-12, -11, 16, -11, 25, -6);
-    ctx.lineTo(27, 4);
-    ctx.bezierCurveTo(14, 10, -14, 9, -31, 3);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.beginPath();
-    ctx.moveTo(-28, -0.5);
-    ctx.bezierCurveTo(-10, -3.5, 12, -3.5, 25, -1.5);
-    ctx.lineTo(25.5, 1.2);
-    ctx.bezierCurveTo(12, -0.6, -10, -0.6, -28, 2);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#0f3d1d';
-    ellipse(ctx, 1, -8.6, 10, 2.4);
-    // крыло
-    ctx.fillStyle = '#147a2e';
-    ellipse(ctx, -3, 5, 16, 4.2);
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ellipse(ctx, -5, 3.6, 11, 1.4);
-    // козырёк
-    ctx.fillStyle = 'rgba(205,240,255,0.65)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(9, -9);
-    ctx.quadraticCurveTo(11, -18, 15, -9.5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    // нос и пропеллер
-    ctx.fillStyle = '#eef2f1';
-    ellipse(ctx, 27, -1, 4.5, 5.6);
-    ctx.fillStyle = '#c3cbc8';
-    circle(ctx, 31, -1, 2.2);
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    ellipse(ctx, 32, -1, 2.6, 17);
-    ctx.fillStyle = 'rgba(60,60,60,0.85)';
-    ellipse(ctx, 32, -1, 1.8, Math.max(2, 16 * Math.abs(Math.cos(t * 55))));
+    var m = ctx.getTransform ? ctx.getTransform() : null;
+    var es = m ? Math.sqrt(m.a * m.a + m.b * m.b) : scale;
+    es = Math.max(0.5, Math.round(es * 4) / 4);
+    drawScarf(ctx, t);
+    var b = PLANE_BOX;
+    ctx.drawImage(planeSprite(es), b.x, b.y, b.w, b.h);
+    drawPropeller(ctx, t);
     ctx.restore();
   }
 
@@ -933,15 +1232,20 @@
     ctx.fillStyle = glow;
     circle(ctx, 0, 0, 20);
     ctx.scale(sx, 1);
+    ctx.fillStyle = 'rgba(150,70,0,0.35)';
+    circle(ctx, 0.8, 1.8, 11);
     var face = ctx.createLinearGradient(-11, -11, 11, 11);
-    face.addColorStop(0, '#fff09a');
-    face.addColorStop(0.5, '#ffc93a');
-    face.addColorStop(1, '#e79a12');
+    face.addColorStop(0, '#FFF3A0');
+    face.addColorStop(0.5, '#FFC93A');
+    face.addColorStop(1, '#FF9A1A');
     ctx.fillStyle = face;
     circle(ctx, 0, 0, 11);
-    ctx.strokeStyle = '#c47f0c';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(200,110,0,0.55)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 8.4, 0, Math.PI * 2);
     ctx.stroke();
+    gloss(ctx, -4, -6, 3.6, 1.6, -0.5, 0.7);
     ctx.fillStyle = '#fff6c8';
     ctx.beginPath();
     for (var i = 0; i < 10; i++) {
