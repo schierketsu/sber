@@ -229,6 +229,8 @@ html, body {
 }
 .btn:active { transform: scale(0.98); }
 .btn-secondary { background: #fff; }
+.btn svg { width: 22px; height: 22px; margin-right: 8px; flex: none; }
+.btn:disabled { opacity: 0.6; }
 /* главная кнопка окна: белая, по ней без остановки плывёт голубая волна. Плитка вдвое шире кнопки
    и сдвигается ровно на свою ширину, поэтому цикл без шва */
 .btn-shine {

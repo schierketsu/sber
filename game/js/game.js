@@ -55,7 +55,8 @@
     crashBest: $('crash-best'),
     btnContinue: $('btn-continue'),
     winText: $('win-text'),
-    winCollection: $('win-collection')
+    winCollection: $('win-collection'),
+    btnShare: $('btn-share')
   };
   var screens = {
     card: $('screen-card'),
@@ -762,6 +763,150 @@
     }
   }
 
+  /* ---------- поделиться ---------- */
+
+  /* Системное «поделиться» через приложение: текст и квадратная картинка с собранными открытками.
+     Картинка рисуется из своих же файлов, без сети. Если собрать её не вышло — уходит только текст. */
+  var SHARE_SIZE = 900;
+  var SHARE_FONT = 'system-ui, -apple-system, "SF Pro Display", Roboto, "Segoe UI", sans-serif';
+
+  function shareGame() {
+    if (ui.btnShare.disabled) return;
+    ui.btnShare.disabled = true;
+    var got = cards.filter(function (entry, k) { return collected[k]; });
+    loadImages(got.map(function (entry) { return entry.card.image; }), function (imgs) {
+      var image = null;
+      try {
+        image = drawShareImage(imgs, got.length).toDataURL('image/png');
+      } catch (e) { /* холст не отдаёт картинку — поделимся текстом */ }
+      Bridge.share(shareText(got.length), image);
+      ui.btnShare.disabled = false;
+    });
+  }
+
+  /* Без «долетел/долетела»: играют и мальчики, и девочки. */
+  function cardsLine(n) {
+    return (n === cards.length ? 'Все ' : '') + n + ' ' + plural(n, ['открытка', 'открытки', 'открыток']) +
+      ' о чудесах России ' + (n === 1 ? 'собрана' : 'собраны');
+  }
+
+  function shareText(n) {
+    return 'Маршрут в игре «' + content.title + '» пройден! ' + cardsLine(n) + '. Попробуй и ты.';
+  }
+
+  function loadImages(srcs, done) {
+    var imgs = [];
+    var left = srcs.length;
+    if (!left) {
+      done(imgs);
+      return;
+    }
+    srcs.forEach(function (src, i) {
+      var img = new Image();
+      img.onload = img.onerror = function () {
+        imgs[i] = img.naturalWidth ? img : null;
+        if (--left === 0) done(imgs);
+      };
+      if (src) img.src = src; else img.onerror();
+    });
+  }
+
+  function roundRectPath(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  /* Надпись как название региона: белая, с объёмной синей тенью снизу. */
+  function heroText(g, text, x, y, depth) {
+    g.fillStyle = '#1F6FE0';
+    for (var d = depth; d > 0; d -= 2) g.fillText(text, x, y + d);
+    g.fillStyle = '#ffffff';
+    g.fillText(text, x, y);
+  }
+
+  function drawShareImage(imgs, n) {
+    var S = SHARE_SIZE;
+    var c = document.createElement('canvas');
+    c.width = S;
+    c.height = S;
+    var g = c.getContext('2d');
+    var i;
+
+    var sky = g.createLinearGradient(0, 0, 0, S);
+    sky.addColorStop(0, '#2F9BFF');
+    sky.addColorStop(1, '#9FE2FF');
+    g.fillStyle = sky;
+    g.fillRect(0, 0, S, S);
+    g.save();
+    g.translate(S * 0.5, S * 0.1);
+    g.fillStyle = 'rgba(255,255,255,0.1)';
+    for (i = 0; i < 14; i++) {
+      g.rotate(Math.PI * 2 / 14);
+      g.beginPath();
+      g.moveTo(0, 0);
+      g.lineTo(S * 1.3, -50);
+      g.lineTo(S * 1.3, 50);
+      g.closePath();
+      g.fill();
+    }
+    g.restore();
+
+    g.textAlign = 'center';
+    g.font = '900 70px ' + SHARE_FONT;
+    heroText(g, 'Маршрут пройден!', S / 2, 122, 8);
+    g.font = '700 34px ' + SHARE_FONT;
+    g.fillStyle = 'rgba(255,255,255,0.95)';
+    g.fillText(cardsLine(n), S / 2, 182);
+
+    // открытки в белых рамках, по три в ряд, чуть наклонены
+    var cols = 3;
+    var tw = 228;
+    var th = 137;
+    var pad = 10;
+    var gap = 26;
+    var cw = tw + pad * 2;
+    var x0 = (S - cols * cw - (cols - 1) * gap) / 2;
+    imgs.forEach(function (img, k) {
+      var x = x0 + (k % cols) * (cw + gap) + cw / 2;
+      var y = 232 + Math.floor(k / cols) * (th + pad * 2 + gap) + th / 2 + pad;
+      g.save();
+      g.translate(x, y);
+      g.rotate((k % 2 ? 2 : -2) * Math.PI / 180);
+      g.shadowColor = 'rgba(10,40,120,0.3)';
+      g.shadowBlur = 16;
+      g.shadowOffsetY = 6;
+      g.fillStyle = '#ffffff';
+      roundRectPath(g, -cw / 2, -th / 2 - pad, cw, th + pad * 2, 18);
+      g.fill();
+      g.shadowColor = 'transparent';
+      roundRectPath(g, -tw / 2, -th / 2, tw, th, 12);
+      g.clip();
+      g.fillStyle = '#E4EBF0';
+      g.fillRect(-tw / 2, -th / 2, tw, th);
+      if (img) {
+        var k2 = Math.max(tw / img.naturalWidth, th / img.naturalHeight);
+        var iw = img.naturalWidth * k2;
+        var ih = img.naturalHeight * k2;
+        g.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+      }
+      g.restore();
+    });
+
+    // котик-супергерой и название игры
+    Art.drawHero(g, S * 0.3, S * 0.8, -0.08, 0.35, 3.2, null);
+    g.font = '900 50px ' + SHARE_FONT;
+    heroText(g, content.title, S * 0.73, S * 0.79, 6);
+    g.font = '700 28px ' + SHARE_FONT;
+    g.fillStyle = 'rgba(255,255,255,0.95)';
+    g.fillText(content.subtitle, S * 0.73, S * 0.79 + 46);
+    return c;
+  }
+
   /* ---------- кадр ---------- */
 
   function update(dt) {
@@ -962,6 +1107,7 @@
 
   screens.card.addEventListener('click', tapCard);
   ui.btnContinue.addEventListener('click', continueRun);
+  ui.btnShare.addEventListener('click', shareGame);
   ui.btnMenu.addEventListener('click', openMenu);
   ui.btnSound.addEventListener('click', function () {
     Sound.unlock();
