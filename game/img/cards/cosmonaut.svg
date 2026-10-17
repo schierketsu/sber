@@ -38,10 +38,6 @@
       <stop offset="0" stop-color="#FFFFFF"/>
       <stop offset="1" stop-color="#C9CFE6"/>
     </linearGradient>
-    <linearGradient id="seat" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FF9E6B"/>
-      <stop offset="1" stop-color="#C8502A"/>
-    </linearGradient>
     <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFF1E4"/>
       <stop offset="1" stop-color="#FFD2B5"/>
@@ -80,11 +76,6 @@
   <path d="M-40 182 C-10 168 20 176 40 168 C64 160 80 176 104 170 C116 190 90 204 60 200 C30 212 0 200 -40 206 Z" fill="#6BE884" opacity="0.9"/>
   <path d="M120 214 C140 204 160 212 170 228 L150 240 L118 240 Z" fill="#6BE884" opacity="0.9"/>
   <ellipse cx="70" cy="166" rx="40" ry="6" transform="rotate(-12 70 166)" fill="#fff" opacity="0.35"/>
-  <g filter="url(#st)">
-    <path d="M232 196 L300 196 C306 196 308 202 304 206 L236 214 C228 215 226 206 232 196 Z" fill="url(#seat)"/>
-    <path d="M292 198 L304 150 C306 142 316 142 316 150 L310 202 Z" fill="url(#seat)"/>
-  </g>
-  <path d="M262 198 C258 186 266 178 262 168 M280 197 C286 186 278 178 284 170" stroke="#FFC46B" stroke-width="3" fill="none" stroke-linecap="round"/>
   <g transform="rotate(-14 232 112)">
     <g filter="url(#st)">
       <rect x="208" y="96" width="14" height="30" rx="6" fill="#9AA3C7"/>

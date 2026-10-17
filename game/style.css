@@ -277,8 +277,16 @@ html, body {
 }
 .card .doodle-spark { top: 4px; right: 4px; z-index: 3; transform: rotate(-10deg); }
 .card-body { padding: 16px 2px 0; }
-.card h2 { margin-top: 4px; font-size: 26px; }
-.card-text p { margin: 0 0 10px; font-size: 16px; line-height: 1.42; }
+.card h2 { margin-top: 4px; font-size: 26px; text-align: center; }
+/* текст по ширине; переносы, чтобы в узкой колонке не было дыр между словами */
+.card-text p {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.42;
+  text-align: justify;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+}
 
 /* проигрыш */
 #screen-crash .doodle-drops { top: 14px; left: 18px; transform: rotate(-20deg); }

@@ -76,13 +76,6 @@
   </g>
   <ellipse cx="47" cy="200" rx="2" ry="12" transform="rotate(20 47 200)" fill="#fff" opacity="0.55"/>
   <ellipse cx="335" cy="198" rx="2" ry="12" transform="rotate(20 335 198)" fill="#fff" opacity="0.55"/>
-  <g filter="url(#st)">
-    <rect x="202" y="112" width="5" height="44" rx="2.5" fill="#8A4B22"/>
-    <path d="M200 112 H156 L148 120 L156 128 H200 Z" fill="#C6FF3A"/>
-    <path d="M209 132 H254 L262 140 L254 148 H209 Z" fill="#FF6FD1"/>
-    <text x="176" y="124" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="10" font-weight="900" text-anchor="middle" fill="#1A1033">ЕВРОПА</text>
-    <text x="234" y="144" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="10" font-weight="900" text-anchor="middle" fill="#1A1033">АЗИЯ</text>
-  </g>
   <path d="M0-10C1-3 3-1 10 0 3 1 1 3 0 10-1 3-3 1-10 0-3-1-1-3 0-10Z" transform="translate(286 186) scale(1.2)" fill="#fff"/>
   <path d="M0-10C1-3 3-1 10 0 3 1 1 3 0 10-1 3-3 1-10 0-3-1-1-3 0-10Z" transform="translate(60 40) scale(1.4)" fill="url(#holo)"/>
   <path d="M0-10C1-3 3-1 10 0 3 1 1 3 0 10-1 3-3 1-10 0-3-1-1-3 0-10Z" transform="translate(190 34) scale(0.8)" fill="#fff"/>
