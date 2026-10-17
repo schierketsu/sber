@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 240">
+  <defs>
+    <pattern id="weave" width="6" height="6" patternUnits="userSpaceOnUse">
+      <path d="M0 0.5 H6 M0 3.5 H6" stroke="#ebdfca" stroke-width="1"/>
+    </pattern>
+    <pattern id="band" x="4" width="32" height="34" patternUnits="userSpaceOnUse">
+      <rect width="32" height="34" fill="#f7efe1"/>
+      <rect width="32" height="3" fill="#2b1d1d"/>
+      <rect y="31" width="32" height="3" fill="#2b1d1d"/>
+      <path d="M3 17 L16 6 L29 17 L16 28 Z" fill="#c62f2f"/>
+      <path d="M10 17 L16 12 L22 17 L16 22 Z" fill="#f7efe1"/>
+      <circle cx="16" cy="17" r="2.2" fill="#2b1d1d"/>
+      <path d="M-2 17 L0 15 L2 17 L0 19 Z M30 17 L32 15 L34 17 L32 19 Z" fill="#2b1d1d"/>
+    </pattern>
+    <g id="star">
+      <rect x="-12" y="-12" width="24" height="24" fill="#c62f2f"/>
+      <rect x="-12" y="-12" width="24" height="24" fill="#c62f2f" transform="rotate(45)"/>
+      <rect x="-6" y="-6" width="12" height="12" fill="#f7efe1" transform="rotate(45)"/>
+      <rect x="-3" y="-3" width="6" height="6" fill="#2b1d1d"/>
+    </g>
+    <g id="bud">
+      <path d="M0 -9 L7 0 L0 9 L-7 0 Z" fill="#c62f2f"/>
+      <path d="M0 -3.5 L3 0 L0 3.5 L-3 0 Z" fill="#2b1d1d"/>
+    </g>
+  </defs>
+  <rect width="400" height="240" fill="#f7efe1"/>
+  <rect width="400" height="240" fill="url(#weave)"/>
+  <rect y="8" width="400" height="34" fill="url(#band)"/>
+  <rect y="198" width="400" height="34" fill="url(#band)"/>
+  <g stroke="#c62f2f" stroke-width="2" stroke-dasharray="4 3">
+    <path d="M20 52 H380 M20 188 H380"/>
+  </g>
+
+  <!-- древо жизни -->
+  <path d="M176 182 L200 164 L224 182 Z" fill="#2b1d1d"/>
+  <rect x="197" y="70" width="6" height="104" fill="#c62f2f"/>
+  <g stroke="#c62f2f" stroke-width="5" stroke-linecap="square" fill="none">
+    <path d="M200 156 L172 134 M200 156 L228 134"/>
+    <path d="M200 128 L176 108 M200 128 L224 108"/>
+    <path d="M200 100 L182 84 M200 100 L218 84"/>
+  </g>
+  <use xlink:href="#bud" href="#bud" x="168" y="130"/>
+  <use xlink:href="#bud" href="#bud" x="232" y="130"/>
+  <use xlink:href="#bud" href="#bud" x="172" y="104"/>
+  <use xlink:href="#bud" href="#bud" x="228" y="104"/>
+  <use xlink:href="#bud" href="#bud" x="178" y="80"/>
+  <use xlink:href="#bud" href="#bud" x="222" y="80"/>
+  <use xlink:href="#star" href="#star" transform="translate(200 68) scale(0.8)"/>
+
+  <!-- звёзды по бокам -->
+  <use xlink:href="#star" href="#star" transform="translate(84 120) scale(1.5)"/>
+  <use xlink:href="#star" href="#star" transform="translate(316 120) scale(1.5)"/>
+  <use xlink:href="#bud" href="#bud" x="84" y="76"/>
+  <use xlink:href="#bud" href="#bud" x="84" y="164"/>
+  <use xlink:href="#bud" href="#bud" x="316" y="76"/>
+  <use xlink:href="#bud" href="#bud" x="316" y="164"/>
+  <g fill="#2b1d1d">
+    <rect x="40" y="117" width="6" height="6" transform="rotate(45 43 120)"/>
+    <rect x="122" y="117" width="6" height="6" transform="rotate(45 125 120)"/>
+    <rect x="272" y="117" width="6" height="6" transform="rotate(45 275 120)"/>
+    <rect x="354" y="117" width="6" height="6" transform="rotate(45 357 120)"/>
+  </g>
+</svg>

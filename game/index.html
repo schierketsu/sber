@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#F2F5F7">
+<title>Кот-пилот: полёт над Россией</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="Игровое поле: нажимай, чтобы самолётик поднимался"></canvas>
+
+  <div id="hud" class="hud" hidden>
+    <canvas id="score-canvas" class="score" role="img" aria-label="Очки: 0"></canvas>
+  </div>
+
+  <div id="corner" class="corner" hidden>
+    <button id="btn-close" class="icon-btn" type="button" aria-label="Закрыть игру">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    </button>
+    <button id="btn-sound" class="icon-btn" type="button" aria-label="Выключить звук">
+      <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3.5L12 5.2v13.6L7.5 15H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3.5L12 5.2v13.6L7.5 15H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+
+  <div id="hint" class="hint" hidden></div>
+  <div id="banner" class="banner" hidden>
+    <div id="banner-name" class="banner-name"></div>
+    <div id="banner-tagline" class="banner-tagline"></div>
+  </div>
+
+  <section id="screen-menu" class="screen-menu" hidden>
+    <div class="menu-start">
+      <button id="btn-start" class="btn btn-primary btn-start" type="button">Полетели!</button>
+    </div>
+    <div id="comic" class="comic" aria-label="Комикс-приглашение">
+      <canvas id="comic-canvas"></canvas>
+      <p id="comic-top" class="comic-caption comic-caption-top"></p>
+      <p id="comic-bottom" class="comic-caption comic-caption-bottom"></p>
+    </div>
+  </section>
+
+  <section id="screen-card" class="screen" hidden>
+    <div class="panel card" role="dialog" aria-modal="true" aria-labelledby="card-title">
+      <div id="card-media" class="card-media"><img id="card-image" alt=""></div>
+      <div class="card-body">
+        <div class="card-meta"><span id="card-region" class="chip"></span><span id="card-count" class="card-count"></span></div>
+        <h2 id="card-title"></h2>
+        <div id="card-text" class="card-text"></div>
+        <button id="btn-card" class="btn btn-primary" type="button">Летим дальше!</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-pause" class="screen" hidden>
+    <div class="panel">
+      <h2>Пауза</h2>
+      <p>Самолётик ждёт, пока ты вернёшься.</p>
+      <button class="btn btn-primary" type="button" data-action="resume">Продолжить полёт</button>
+      <button class="btn btn-secondary" type="button" data-action="restart">Начать сначала</button>
+      <button class="btn btn-link" type="button" data-action="exit">Выйти из игры</button>
+    </div>
+  </section>
+
+  <section id="screen-crash" class="screen" hidden>
+    <div class="panel">
+      <h2>В следующий раз будет лучше!</h2>
+      <div class="result-row">
+        <div><b id="crash-score">0</b><span id="crash-score-label">очков</span></div>
+        <div><b id="crash-best">0</b><span>рекорд</span></div>
+      </div>
+      <button id="btn-continue" class="btn btn-primary" type="button">Попробовать ещё раз</button>
+    </div>
+  </section>
+
+  <section id="screen-win" class="screen" hidden>
+    <div class="panel">
+      <p class="eyebrow">Маршрут пройден!</p>
+      <h2>Ты долетел до финиша!</h2>
+      <p id="win-text"></p>
+      <div id="win-collection" class="collection"></div>
+      <button class="btn btn-primary" type="button" data-action="share">Поделиться</button>
+      <button class="btn btn-secondary" type="button" data-action="restart">Сыграть ещё</button>
+      <button class="btn btn-link" type="button" data-action="exit">Выйти из игры</button>
+    </div>
+  </section>
+
+  <div id="loading" class="loading">Загружаем…</div>
+</div>
+
+<script src="js/bridge.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/content.js"></script>
+<script src="js/art.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

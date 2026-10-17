@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7cc4f5"/>
+      <stop offset="1" stop-color="#e4f5ff"/>
+    </linearGradient>
+    <linearGradient id="river" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9f7ff"/>
+      <stop offset="1" stop-color="#7fd0ec"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#sky)"/>
+  <g fill="#fff" opacity="0.9">
+    <ellipse cx="300" cy="38" rx="28" ry="9"/>
+    <ellipse cx="320" cy="33" rx="18" ry="10"/>
+    <ellipse cx="70" cy="30" rx="22" ry="7"/>
+  </g>
+  <path d="M0 132 L40 92 L62 108 L104 54 L138 96 L170 70 L214 118 L250 62 L292 104 L330 74 L372 112 L400 96 V160 H0 Z" fill="#8a9cc7"/>
+  <g fill="#f7faff">
+    <path d="M104 54 L118 72 L110 70 L102 78 L94 68 Z"/>
+    <path d="M250 62 L264 80 L255 77 L247 86 L238 76 Z"/>
+    <path d="M170 70 L180 82 L172 80 L164 77 Z"/>
+    <path d="M330 74 L342 88 L333 86 L324 84 Z"/>
+    <path d="M40 92 L50 102 L42 101 L34 99 Z"/>
+  </g>
+  <path d="M0 150 L56 118 L100 138 L150 112 L196 140 L240 116 L290 140 L340 120 L400 142 V180 H0 Z" fill="#5f7aa8"/>
+  <path d="M150 112 L160 120 L152 121 L144 117 Z M240 116 L249 123 L241 124 L233 121 Z" fill="#eef4ff"/>
+  <!-- указатель на хребте: граница Европы и Азии -->
+  <g transform="translate(240 116)">
+    <rect x="-1.5" y="-30" width="3" height="30" fill="#6b4a2b"/>
+    <path d="M-2 -30 H-44 L-50 -24 L-44 -18 H-2 Z" fill="#ffe08a" stroke="#6b4a2b" stroke-width="1.2"/>
+    <path d="M2 -20 H44 L50 -14 L44 -8 H2 Z" fill="#ffe08a" stroke="#6b4a2b" stroke-width="1.2"/>
+    <text x="-24" y="-20.5" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#4a3220">Европа</text>
+    <text x="24" y="-10.5" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#4a3220">Азия</text>
+  </g>
+  <path d="M0 170 C80 150 160 166 220 158 C300 148 350 164 400 156 V240 H0 Z" fill="#6aa86a"/>
+  <path d="M110 240 C140 214 190 206 214 190 C232 178 252 172 288 166 L296 168 C262 176 246 184 232 196 C210 214 180 226 168 240 Z" fill="url(#river)"/>
+  <g fill="#fff" opacity="0.7">
+    <rect x="170" y="216" width="14" height="2" rx="1"/>
+    <rect x="216" y="192" width="10" height="2" rx="1"/>
+    <rect x="258" y="176" width="9" height="1.6" rx="0.8"/>
+  </g>
+  <g fill="#1f4a3a">
+    <path d="M30 222 L44 176 L58 222 Z M36 200 L44 166 L52 200 Z"/>
+    <path d="M62 232 L78 184 L94 232 Z M68 208 L78 172 L88 208 Z"/>
+    <path d="M330 226 L344 182 L358 226 Z M336 204 L344 170 L352 204 Z"/>
+    <path d="M362 236 L378 190 L394 236 Z M368 212 L378 178 L388 212 Z"/>
+  </g>
+  <g fill="#2c6a50">
+    <path d="M8 236 L20 198 L32 236 Z"/>
+    <path d="M300 240 L312 204 L324 240 Z"/>
+  </g>
+</svg>

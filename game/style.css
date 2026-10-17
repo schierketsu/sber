@@ -1,0 +1,371 @@
+/* Стиль — по макету СберKids: фон #F2F5F7, белые карточки, градиентная главная кнопка
+   с чёрным текстом, кнопки 56 pt со скруглением 16, мягкая сиреневая тень. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --bg: #F2F5F7;
+  --card: #FFFFFF;
+  --ink: #000000;
+  --muted: #7D868C;
+  --icon: #A3C2DB;
+  --line: #E4EBF0;
+  --green: #24B23E;
+  --brand: linear-gradient(90deg, #4AD6FC 0%, #85FEDC 26%, #CDFF73 51%, #84FF20 100%);
+  --shadow: 0 4px 11px rgba(136, 147, 192, 0.4);
+  --font: system-ui, -apple-system, "SF Pro Text", Roboto, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+[hidden] { display: none !important; }
+
+#game {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+/* ---------- кнопки слева сверху, как «назад» в приложении ---------- */
+.corner {
+  position: absolute;
+  top: calc(var(--safe-top) + 12px);
+  left: calc(var(--safe-left) + 16px);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+}
+.icon-btn {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.icon-btn:active { transform: scale(0.95); }
+.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn .icon-off, .icon-btn.off .icon-on { display: none; }
+.icon-btn.off .icon-off { display: block; }
+
+/* ---------- счёт: под кнопками по центру, как в играх приложения ---------- */
+.hud {
+  position: absolute;
+  top: calc(var(--safe-top) + 70px);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 4;
+}
+.score { display: block; }
+.score.bump { animation: bump 0.25s ease-out; }
+
+.hint {
+  position: absolute;
+  left: 50%;
+  top: 64%;
+  transform: translateX(-50%);
+  padding: 13px 20px;
+  border-radius: 16px;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  animation: pulse 1.2s ease-in-out infinite;
+  z-index: 3;
+}
+
+.banner {
+  position: absolute;
+  left: 0; right: 0;
+  top: 34%;
+  padding: 0 24px;
+  text-align: center;
+  color: #fff;
+  pointer-events: none;
+  animation: banner 2.2s ease forwards;
+  z-index: 3;
+}
+.banner-name {
+  font-size: 44px;
+  font-weight: 800;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.2), 0 0 22px rgba(0, 0, 0, 0.35);
+}
+.banner-tagline {
+  font-size: 17px;
+  font-weight: 700;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* ---------- экраны ---------- */
+.screen {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--safe-top) + 84px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 16px) calc(var(--safe-left) + 16px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  background: rgba(20, 28, 48, 0.4);
+  z-index: 10;
+  animation: fade 0.2s ease;
+}
+.panel {
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+  padding: 20px 16px 16px;
+  border-radius: 24px;
+  text-align: center;
+  background: var(--card);
+  box-shadow: 0 12px 40px rgba(20, 30, 60, 0.25);
+  animation: pop 0.3s cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+.panel h2 { margin: 4px 0 8px; font-size: 24px; font-weight: 800; line-height: 1.15; }
+.panel p { margin: 0 0 12px; font-size: 16px; line-height: 1.4; }
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 16px;
+  color: var(--ink);
+  font: 600 17px/1.2 var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary { background: var(--brand); }
+.btn-secondary { background: var(--bg); }
+.btn-link {
+  min-height: 44px;
+  margin-top: 4px;
+  color: var(--muted);
+  background: none;
+  font-size: 16px;
+}
+.chip {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--ink);
+  background: var(--bg);
+  font-size: 14px;
+  font-weight: 600;
+}
+.eyebrow {
+  margin: 0 !important;
+  color: var(--green);
+  font-size: 13px !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* меню: одна кнопка по центру и комикс-приглашение под ней */
+.screen-menu {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  z-index: 10;
+  animation: fade 0.2s ease;
+}
+.menu-start {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--safe-left) + 16px);
+  right: calc(var(--safe-right) + 16px);
+  display: flex;
+  justify-content: center;
+  transform: translateY(-50%);
+}
+.btn-start {
+  width: 100%;
+  max-width: 320px;
+  min-height: 64px;
+  margin: 0;
+  border-radius: 20px;
+  font-size: 21px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(30, 110, 80, 0.35);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+.comic {
+  position: absolute;
+  top: calc(50% + 48px);
+  bottom: calc(var(--safe-bottom) + 16px);
+  left: calc(var(--safe-left) + 16px);
+  right: calc(var(--safe-right) + 16px);
+  max-width: 420px;
+  max-height: 360px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 4px solid #fff;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+#comic-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* подписи как в комиксе из макета приложения: тёмная плашка, чёрная обводка, белые капители */
+.comic-caption {
+  position: absolute;
+  max-width: 72%;
+  margin: 0;
+  padding: 7px 11px;
+  border: 3px solid #111;
+  border-radius: 14px;
+  color: #fff;
+  background: #3A3D4A;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.comic-caption-top { top: 10px; left: 10px; transform: rotate(-1.5deg); }
+.comic-caption-bottom { right: 10px; bottom: 12px; transform: rotate(1deg); }
+
+/* открытка */
+.card { padding: 0; overflow: hidden; text-align: left; }
+.card-media { position: relative; width: 100%; padding-top: 60%; background: var(--bg); }
+.card-media img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.card-body { padding: 16px 16px 16px; }
+.card-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-count { color: var(--muted); font-size: 13px; font-weight: 600; }
+.card h2 { margin-top: 12px; }
+.card-text p { margin: 0 0 10px; font-size: 16px; line-height: 1.4; }
+
+/* результаты */
+.result-row {
+  display: flex;
+  justify-content: space-around;
+  margin: 4px 0 12px;
+  padding: 12px 6px;
+  border-radius: 16px;
+  background: var(--bg);
+}
+.result-row b { display: block; font-size: 28px; font-weight: 800; }
+.result-row span { color: var(--muted); font-size: 13px; font-weight: 600; }
+
+.collection {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 6px 0 12px;
+}
+.thumb {
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: left;
+  color: var(--ink);
+  background: var(--bg);
+  font: 600 11px/1.2 var(--font);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.thumb-media { position: relative; padding-top: 60%; background: var(--line); }
+.thumb-media img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+.thumb.locked { cursor: default; }
+.thumb-q {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--icon);
+  font-size: 20px;
+  font-weight: 800;
+}
+.thumb-title { display: block; padding: 6px 7px 7px; min-height: 2.6em; }
+.thumb.locked .thumb-title { color: var(--muted); }
+
+.loading {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 17px;
+  font-weight: 600;
+  background: var(--bg);
+  z-index: 30;
+}
+
+/* горизонтальный экран телефона: счёт в одной строке с кнопками */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hud { top: calc(var(--safe-top) + 4px); }
+  .screen { padding-top: calc(var(--safe-top) + 12px); padding-left: calc(var(--safe-left) + 152px); }
+  .menu-start { right: 52%; }
+  .comic {
+    top: calc(var(--safe-top) + 12px);
+    bottom: calc(var(--safe-bottom) + 12px);
+    left: 50%;
+    max-width: none;
+    max-height: none;
+  }
+  .panel { max-width: 560px; }
+  .card { display: flex; max-width: 640px; }
+  .card-media { flex: 0 0 40%; padding-top: 0; }
+  .hint { top: 72%; }
+  .banner { top: 26%; }
+}
+
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes pulse { 50% { transform: translateX(-50%) scale(1.05); } }
+@keyframes breathe { 50% { transform: scale(1.04); } }
+@keyframes banner {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+  15% { opacity: 1; transform: none; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }

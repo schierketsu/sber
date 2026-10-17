@@ -1,0 +1,153 @@
+/* Контент игры: регионы, открытки, монетки.
+   Источник — content/regions.json рядом с игрой (контент-менеджер меняет его без релиза).
+   Если файл не загрузился или битый, игра берёт встроенную копию ниже. */
+(function () {
+  'use strict';
+
+  var CONTENT_URL = 'content/regions.json';
+  var LOAD_TIMEOUT_MS = 2500;
+  var SCENES = ['volga', 'ural', 'baikal'];
+  var OBSTACLES = ['pillar', 'rock', 'ice'];
+
+  var DEFAULT_CONTENT = {
+    title: 'Кот-пилот',
+    subtitle: 'Полёт над Россией',
+    intro: ['Привет! Я кот-пилот.', 'Полетели со мной изучать нашу бескрайнюю Родину!'],
+    pointsPerCard: 10,
+    coin: { chance: 0.35, value: 2 },
+    regions: [
+      {
+        id: 'chuvashia', name: 'Чувашия', nameTo: 'в Чувашию',
+        tagline: 'Волга, вышивка и памятник над рекой',
+        scene: 'volga', obstacle: 'pillar', speed: 115, gap: 190,
+        cards: [
+          {
+            title: 'Монумент Матери-Покровительнице',
+            text: 'В Чебоксарах над Волгой стоит огромная статуя женщины с раскинутыми руками. Кажется, будто она обнимает город и всех, кто в нём живёт.\n\nВысота памятника вместе с постаментом — 46 метров, почти как дом в 15 этажей. Его открыли в 2003 году.',
+            image: 'img/cards/mother.svg'
+          },
+          {
+            title: 'Край ста тысяч вышивок',
+            text: 'Чувашию называют краем ста тысяч слов, ста тысяч песен и ста тысяч вышивок.\n\nВ старинных красных узорах прячутся знаки солнца, звёзд и древа жизни. Древо жизни и три звезды есть даже на флаге Чувашии.',
+            image: 'img/cards/embroidery.svg'
+          }
+        ]
+      },
+      {
+        id: 'komi', name: 'Коми', nameTo: 'в Коми',
+        tagline: 'Уральские горы и каменные великаны',
+        scene: 'ural', obstacle: 'rock', speed: 122, gap: 180,
+        cards: [
+          {
+            title: 'Югыд ва и Уральские горы',
+            text: '«Югыд ва» на языке коми значит «светлая вода». Это один из самых больших национальных парков России — он раскинулся на склонах Уральских гор. По Уралу проходит граница между Европой и Азией.\n\nЛеса Коми стали первым природным местом России в списке Всемирного наследия ЮНЕСКО.',
+            image: 'img/cards/yugyd-va.svg'
+          },
+          {
+            title: 'Маньпупунёр — каменные великаны',
+            text: 'По соседству с «Югыд ва», в Печоро-Илычском заповеднике, на плато стоят семь каменных столбов высотой от 30 до 42 метров.\n\nКогда-то здесь были высокие горы. Ветер, дождь и мороз миллионы лет разрушали мягкий камень, а твёрдые столбы остались. В 2008 году Маньпупунёр выбрали одним из семи чудес России.',
+            image: 'img/cards/manpupuner.svg'
+          }
+        ]
+      },
+      {
+        id: 'buryatia', name: 'Бурятия', nameTo: 'в Бурятию',
+        tagline: 'Байкал и старейший заповедник страны',
+        scene: 'baikal', obstacle: 'ice', speed: 130, gap: 172,
+        cards: [
+          {
+            title: 'Озеро Байкал',
+            text: 'Байкал — самое глубокое озеро на планете: 1642 метра. В него впадает больше трёхсот рек, а вытекает только одна — Ангара.\n\nЗдесь живёт байкальская нерпа — тюлень, который больше нигде в мире не встречается. Восточный берег Байкала — это Бурятия.',
+            image: 'img/cards/baikal.svg'
+          },
+          {
+            title: 'Баргузинский заповедник',
+            text: 'Это самый старый заповедник России. Его создали в 1917 году на берегу Байкала, чтобы спасти баргузинского соболя: тогда этих зверьков почти не осталось.\n\nСейчас соболей здесь снова много, а 11 января в честь этого события в России отмечают День заповедников.',
+            image: 'img/cards/barguzin.svg'
+          }
+        ]
+      }
+    ]
+  };
+
+  function str(value, fallback) {
+    return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+  }
+
+  function num(value, fallback, min, max) {
+    var n = typeof value === 'number' && isFinite(value) ? value : fallback;
+    return Math.min(max, Math.max(min, n));
+  }
+
+  /* Картинка открытки: относительный путь рядом с игрой или https-адрес CDN. */
+  function imageUrl(value) {
+    var s = str(value, '');
+    if (!s) return '';
+    if (/^https:\/\//i.test(s)) return s;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s) || s.indexOf('//') === 0) return '';
+    return s;
+  }
+
+  function normalizeCard(raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    var title = str(raw.title, '');
+    var text = str(raw.text, '');
+    if (!title || !text) return null;
+    return { title: title, text: text, image: imageUrl(raw.image) };
+  }
+
+  function normalizeRegion(raw, index) {
+    if (!raw || typeof raw !== 'object') return null;
+    var name = str(raw.name, '');
+    if (!name) return null;
+    var cards = (Array.isArray(raw.cards) ? raw.cards : []).map(normalizeCard).filter(Boolean);
+    if (!cards.length) return null;
+    return {
+      id: str(raw.id, 'region-' + index),
+      name: name,
+      nameTo: str(raw.nameTo, ''),
+      tagline: str(raw.tagline, ''),
+      scene: SCENES.indexOf(raw.scene) !== -1 ? raw.scene : SCENES[index % SCENES.length],
+      obstacle: OBSTACLES.indexOf(raw.obstacle) !== -1 ? raw.obstacle : OBSTACLES[index % OBSTACLES.length],
+      speed: num(raw.speed, 120, 70, 220),
+      gap: num(raw.gap, 180, 140, 260),
+      cards: cards
+    };
+  }
+
+  /* Приводит сырой JSON к форме, с которой работает игра. null — если пользоваться нельзя. */
+  function normalize(raw) {
+    if (!raw || typeof raw !== 'object' || !Array.isArray(raw.regions)) return null;
+    var regions = raw.regions.map(normalizeRegion).filter(Boolean);
+    if (!regions.length) return null;
+    var coin = raw.coin && typeof raw.coin === 'object' ? raw.coin : {};
+    var intro = (Array.isArray(raw.intro) ? raw.intro : []).map(function (line) { return str(line, ''); }).filter(Boolean).slice(0, 2);
+    return {
+      title: str(raw.title, DEFAULT_CONTENT.title),
+      subtitle: str(raw.subtitle, DEFAULT_CONTENT.subtitle),
+      intro: intro.length ? intro : DEFAULT_CONTENT.intro,
+      pointsPerCard: Math.round(num(raw.pointsPerCard, 10, 1, 50)),
+      coin: {
+        chance: num(coin.chance, 0.35, 0, 1),
+        value: Math.round(num(coin.value, 2, 1, 10))
+      },
+      regions: regions
+    };
+  }
+
+  function load(callback) {
+    var done = false;
+    function finish(raw) {
+      if (done) return;
+      done = true;
+      callback(normalize(raw) || normalize(DEFAULT_CONTENT));
+    }
+    setTimeout(function () { finish(null); }, LOAD_TIMEOUT_MS);
+    if (!window.fetch) { finish(null); return; }
+    fetch(CONTENT_URL, { cache: 'no-store' })
+      .then(function (response) { return response.ok ? response.json() : null; })
+      .then(finish, function () { finish(null); });
+  }
+
+  window.Content = { load: load, normalize: normalize, DEFAULT: DEFAULT_CONTENT };
+})();

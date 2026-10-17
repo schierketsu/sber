@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9fd3f3"/>
+      <stop offset="1" stop-color="#f4f0de"/>
+    </linearGradient>
+    <linearGradient id="rock" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c3b7ad"/>
+      <stop offset="0.45" stop-color="#a39589"/>
+      <stop offset="1" stop-color="#7b6e66"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="240" fill="url(#sky)"/>
+  <g fill="#fff" opacity="0.9">
+    <ellipse cx="90" cy="40" rx="34" ry="10"/>
+    <ellipse cx="112" cy="34" rx="20" ry="10"/>
+    <ellipse cx="310" cy="54" rx="26" ry="8"/>
+  </g>
+  <path d="M0 156 L50 128 L96 146 L150 120 L210 148 L268 124 L330 146 L400 130 V180 H0 Z" fill="#aab6ca"/>
+  <path d="M0 176 C90 166 200 172 290 166 C340 163 370 168 400 166 V240 H0 Z" fill="#b6c37a"/>
+  <path d="M0 200 C80 190 160 204 260 196 C320 191 360 198 400 194 V240 H0 Z" fill="#a3b265"/>
+  <g fill="url(#rock)">
+    <path d="M58 182 L56 140 L60 104 L70 92 L80 100 L82 140 L84 182 Z"/>
+    <path d="M100 184 L98 150 L94 118 L102 84 L114 78 L124 90 L122 124 L126 184 Z"/>
+    <path d="M146 182 L148 140 L142 112 L148 88 L162 70 L176 78 L178 104 L170 130 L174 182 Z"/>
+    <path d="M196 184 L194 138 L198 102 L208 90 L220 98 L222 140 L224 184 Z"/>
+    <path d="M240 182 L242 146 L236 120 L244 96 L258 90 L266 104 L262 136 L268 182 Z"/>
+    <path d="M286 182 L284 150 L290 116 L300 106 L310 114 L312 150 L312 182 Z"/>
+    <path d="M346 186 L342 150 L338 118 L348 92 L358 86 L368 96 L366 130 L372 186 Z"/>
+  </g>
+  <g fill="#000" opacity="0.08">
+    <path d="M70 120 H82 M108 110 H124 M156 100 H176 M206 120 H222 M250 116 H264 M296 132 H312 M352 112 H368" stroke="#000" stroke-width="2"/>
+  </g>
+  <!-- человек рядом со столбом, чтобы было видно размер -->
+  <g transform="translate(330 186)">
+    <circle cx="0" cy="-13" r="1.8" fill="#f2c9a0"/>
+    <rect x="-1.8" y="-11" width="3.6" height="6" rx="1" fill="#e04a3c"/>
+    <path d="M-1.2 -5 L-1.8 0 M1.2 -5 L1.8 0" stroke="#3a3a4a" stroke-width="1.2"/>
+  </g>
+  <g fill="#7f8f4a">
+    <path d="M30 210 l3 -8 l3 8 Z M150 222 l3 -9 l3 9 Z M250 214 l3 -8 l3 8 Z M370 226 l3 -9 l3 9 Z"/>
+  </g>
+</svg>
