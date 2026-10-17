@@ -11,8 +11,8 @@
   var COLORS = ['#FF7A1A', '#7B4DFF', '#1F86FF'];
 
   var DEFAULT_CONTENT = {
-    title: 'Кот-пилот',
-    subtitle: 'Полёт над Россией',
+    title: 'Котик-патриотик',
+    subtitle: 'Полёт над Родиной',
     pointsPerCard: 10,
     coin: { chance: 0.35, value: 2 },
     regions: [
