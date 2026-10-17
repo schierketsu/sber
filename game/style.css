@@ -9,9 +9,6 @@
   --violet: #7B4DFF;
   --pink: #E5357F;
   --blue: #1F86FF;
-  --orange: #FF7A1A;
-  --btn-green: linear-gradient(90deg, #2BD66B 0%, #8BF2AE 45%, #E8FFF0 78%, #FFFFFF 100%);
-  --holo-sheen: linear-gradient(110deg, rgba(255,255,255,0) 25%, rgba(142,241,255,0.6) 40%, rgba(255,179,236,0.6) 50%, rgba(185,162,255,0.55) 60%, rgba(255,255,255,0) 75%);
   --shadow: 0 4px 11px rgba(136, 147, 192, 0.4);
   --doodles: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='none' stroke='%23fff' stroke-opacity='.17' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M16 34c8-12 18 8 27-4s17 8 26-4'/%3E%3Cpath d='M132 18l5 12 13 1-10 9 3 13-11-7-11 7 3-13-10-9 13-1z'/%3E%3Cpath d='M52 126c-2-9 11-12 13-3s-9 15-17 8-4-22 9-24 23 7 22 19'/%3E%3Cpath d='M118 112l11-11 11 11 11-11 11 11'/%3E%3Cpath d='M174 164c-9 1-14-10-6-14 6-3 10 4 6 7'/%3E%3Cpath d='M86 62v16m0 8v1'/%3E%3Cpath d='M14 178c10-8 22 6 34-2s20 4 30-2'/%3E%3Ccircle cx='170' cy='72' r='7'/%3E%3Cpath d='M112 172l8 8m0-8l-8 8'/%3E%3Cpath d='M24 82c6-6 14-6 20 0'/%3E%3C/g%3E%3C/svg%3E");
   --font: system-ui, -apple-system, "SF Pro Display", Roboto, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
@@ -50,75 +47,91 @@ html, body {
   touch-action: none;
 }
 
-/* ---------- кнопки слева сверху, как «назад» в приложении ---------- */
+/* ---------- верхняя строка: стеклянные кнопки и плашка счёта ---------- */
+/* Кнопки — матовое стекло без рамки и тени, с бликом в левом верхнем углу.
+   Рамка плашки полупрозрачная и лежит поверх неба (фон плашки обрезан по padding-box). */
 .corner {
   position: absolute;
-  top: calc(var(--safe-top) + 12px);
-  left: calc(var(--safe-left) + 16px);
+  top: calc(var(--safe-top) + 14px);
+  left: calc(var(--safe-left) + 14px);
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
   z-index: 20;
 }
 .icon-btn {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 16px;
+  border-radius: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: var(--shadow);
+  color: #1B2F42;
+  background:
+    radial-gradient(circle at 16% 10%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.5));
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   cursor: pointer;
   touch-action: manipulation;
 }
 .icon-btn:active { transform: scale(0.95); }
-.icon-btn svg { width: 24px; height: 24px; }
+.icon-btn svg { width: 22px; height: 22px; }
 .icon-btn .icon-off, .icon-btn.off .icon-on { display: none; }
 .icon-btn.off .icon-off { display: block; }
 
-/* ---------- счёт: под кнопками по центру, как в играх приложения ---------- */
-.hud {
-  position: absolute;
-  top: calc(var(--safe-top) + 70px);
-  left: 50%;
-  transform: translateX(-50%);
+.score-pill {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  margin-left: 10px;
+  padding: 0 22px 0 18px;
+  border: 3px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  color: #fff;
+  background: linear-gradient(180deg, #3AA8F0 0%, #2C8EE5 100%) padding-box;
   pointer-events: none;
-  z-index: 4;
 }
-.score { display: block; }
-.score.bump { animation: bump 0.25s ease-out; }
+.score-star { width: 24px; height: 24px; flex: none; }
+.score-label { margin-left: 13px; font-size: 15px; font-weight: 700; color: #C2E4FF; }
+.score-value {
+  min-width: 1ch;
+  margin-left: 20px;
+  font-size: 23px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 0 rgba(20, 70, 170, 0.35);
+}
+.score-value.bump { animation: bump 0.25s ease-out; }
 
-/* ---------- стикеры поверх сцены ---------- */
+/* ---------- рука-подсказка: «нажми». Кончик пальца — в точке (left, top) ---------- */
 .hint {
   position: absolute;
-  left: 50%;
-  top: 64%;
-  padding: 13px 22px;
-  border-radius: 999px;
-  color: #000;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 6px 18px rgba(42, 10, 90, 0.25);
-  font-size: 17px;
-  font-weight: 800;
-  white-space: nowrap;
-  transform: translateX(-50%);
+  top: 0; left: 0;
+  width: 80px;
+  height: 92px;
+  margin: -26px 0 0 -40px;
   pointer-events: none;
-  animation: pulse 1.2s ease-in-out infinite;
+  filter: drop-shadow(0 6px 8px rgba(20, 40, 90, 0.28));
   z-index: 3;
 }
+.hint svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.hint-hand { transform-origin: 40px 26px; animation: tap-hand 1.3s ease-in-out infinite; }
+.hint-rays { transform-origin: 40px 26px; animation: tap-rays 1.3s ease-out infinite; }
+.hint-ripple { transform-origin: 40px 26px; animation: tap-ripple 1.3s ease-out infinite; }
 
+/* ---------- название региона: крупно и по центру ---------- */
 .banner {
   position: absolute;
   left: 0; right: 0;
-  top: calc(var(--safe-top) + 156px);
+  top: max(calc(var(--safe-top) + 92px), 16%);
   padding: 0 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
   text-align: center;
   pointer-events: none;
   animation: banner 2.2s ease forwards;
@@ -126,18 +139,47 @@ html, body {
 }
 .banner-name {
   color: #fff;
-  font-size: 52px;
+  font-size: clamp(50px, 16vw, 80px);
   font-weight: 900;
   line-height: 1.05;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.01em;
+  text-shadow:
+    0 1px 0 var(--region-color, var(--violet)),
+    0 2px 0 var(--region-color, var(--violet)),
+    0 3px 0 var(--region-color, var(--violet)),
+    0 4px 0 var(--region-color, var(--violet)),
+    0 5px 0 var(--region-color, var(--violet)),
+    0 6px 0 var(--region-color, var(--violet)),
+    0 12px 26px rgba(42, 10, 90, 0.35);
+}
+
+/* ---------- отсчёт 3, 2, 1 после открытки: как название региона, только крупнее ---------- */
+.countdown {
+  position: absolute;
+  left: 0; right: 0;
+  top: 50%;
+  display: flex;
+  justify-content: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+.countdown-num {
+  color: #fff;
+  font-size: clamp(110px, 36vw, 170px);
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
   text-shadow:
     0 2px 0 var(--region-color, var(--violet)),
     0 4px 0 var(--region-color, var(--violet)),
-    0 8px 20px rgba(42, 10, 90, 0.45);
+    0 6px 0 var(--region-color, var(--violet)),
+    0 8px 0 var(--region-color, var(--violet)),
+    0 10px 0 var(--region-color, var(--violet)),
+    0 18px 34px rgba(42, 10, 90, 0.4);
+  opacity: 0;
 }
-@media (max-height: 700px) {
-  .banner-name { font-size: 42px; }
-}
+.countdown-num.tick { animation: count-pop 1s ease-out forwards; }
 
 /* ---------- экраны: яркие карточки с дудлами ---------- */
 .screen {
@@ -162,15 +204,12 @@ html, body {
   border-radius: 28px;
   text-align: center;
   color: #fff;
-  background: var(--doodles) 0 0 / 200px 200px repeat, var(--panel-color, var(--violet));
+  background: var(--doodles) 0 0 / 200px 200px repeat, var(--blue);
   box-shadow: 0 16px 40px rgba(30, 10, 80, 0.35);
   animation: pop 0.3s cubic-bezier(0.2, 1.3, 0.4, 1);
 }
 .panel h2 { margin: 4px 0 12px; font-size: 28px; font-weight: 900; line-height: 1.1; }
 .panel p { margin: 0 0 12px; font-size: 16px; line-height: 1.4; }
-#screen-pause .panel { --panel-color: var(--blue); }
-#screen-crash .panel { --panel-color: var(--orange); }
-#screen-win .panel { --panel-color: var(--violet); }
 
 .btn {
   position: relative;
@@ -189,14 +228,17 @@ html, body {
   touch-action: manipulation;
 }
 .btn:active { transform: scale(0.98); }
-.btn-primary {
-  background-image: var(--holo-sheen), var(--btn-green);
-  background-size: 260% 100%, 100% 100%;
-  background-position: 130% 0, 0 0;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 6px 16px rgba(20, 90, 50, 0.25);
-  animation: sheen 3.6s ease-in-out infinite;
-}
 .btn-secondary { background: #fff; }
+/* главная кнопка окна: белая, по ней без остановки плывёт голубая волна. Плитка вдвое шире кнопки
+   и сдвигается ровно на свою ширину, поэтому цикл без шва */
+.btn-shine {
+  background-color: #fff;
+  background-image: linear-gradient(90deg, #FFFFFF 0%, #D6EBFF 22%, #8EC8FF 50%, #D6EBFF 78%, #FFFFFF 100%);
+  background-size: 200% 100%;
+  background-repeat: repeat-x;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.8), 0 6px 16px rgba(10, 50, 140, 0.25);
+  animation: shine 3s linear infinite;
+}
 .btn-link {
   min-height: 44px;
   margin-top: 4px;
@@ -210,7 +252,7 @@ html, body {
   display: inline-block;
   padding: 5px 12px;
   border-radius: 999px;
-  color: var(--panel-color, var(--violet));
+  color: var(--blue);
   background: #fff;
   box-shadow: 0 2px 6px rgba(42, 10, 90, 0.18);
   font-size: 14px;
@@ -220,44 +262,12 @@ html, body {
 
 .doodle { position: absolute; pointer-events: none; }
 .doodle-spark { width: 38px; height: 38px; }
-.doodle-drops { width: 34px; height: 34px; }
 .doodle-trophy { width: 70px; height: 78px; }
-.doodle-swoosh { width: 56px; height: 40px; }
-.doodle-swoosh, .doodle-trophy { filter: drop-shadow(0 2px 2px rgba(42, 10, 90, 0.35)); }
+.doodle-trophy { filter: drop-shadow(0 2px 2px rgba(42, 10, 90, 0.35)); }
 
-/* меню: одна кнопка по центру */
-.screen-menu {
-  position: absolute;
-  top: 0; right: 0; bottom: 0; left: 0;
-  z-index: 10;
-  animation: fade 0.2s ease;
-}
-.menu-start {
-  position: absolute;
-  top: 50%;
-  left: calc(var(--safe-left) + 16px);
-  right: calc(var(--safe-right) + 16px);
-  display: flex;
-  justify-content: center;
-  transform: translateY(-50%);
-}
-.start-wrap { position: relative; width: 100%; max-width: 320px; }
-.btn-start {
-  min-height: 66px;
-  margin: 0;
-  border-radius: 20px;
-  font-size: 22px;
-  font-weight: 900;
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.75), 0 8px 24px rgba(30, 110, 80, 0.4);
-  animation: breathe 1.8s ease-in-out infinite, sheen 3.6s ease-in-out infinite;
-}
-.start-wrap .doodle-swoosh { left: -40px; top: 14px; }
-.start-wrap .doodle-spark { right: -14px; top: -20px; transform: rotate(12deg); }
-.start-wrap .doodle-drops { right: 22px; bottom: -26px; transform: rotate(160deg); }
-
-
-/* открытка: цвет карточки берётся из региона */
-.card { padding: 18px 16px 16px; text-align: left; }
+/* открытка: цвет карточки берётся из региона; закрывается нажатием на неё */
+.card { padding: 18px 16px 16px; text-align: left; cursor: pointer; outline: none; }
+.card .card-hint { top: 50%; left: 50%; z-index: 4; animation: fade 0.25s ease; }
 .card-media {
   position: relative;
   width: 100%;
@@ -289,7 +299,6 @@ html, body {
 }
 
 /* проигрыш */
-#screen-crash .doodle-drops { top: 14px; left: 18px; transform: rotate(-20deg); }
 #screen-crash .doodle-spark { top: -16px; right: 16px; transform: rotate(14deg); }
 .result-row {
   display: flex;
@@ -315,15 +324,15 @@ html, body {
   gap: 10px;
   margin: 8px 0 12px;
 }
+/* открытка в коллекции: картинка в ровной белой рамке со всех сторон, без подписи */
 .thumb {
-  padding: 4px;
+  display: block;
+  width: 100%;
+  padding: 5px;
   border: 0;
   border-radius: 14px;
-  text-align: left;
-  color: var(--ink);
   background: #fff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  font: 700 11px/1.2 var(--font);
   cursor: pointer;
   touch-action: manipulation;
   transform: rotate(-2deg);
@@ -342,8 +351,6 @@ html, body {
   font-size: 20px;
   font-weight: 900;
 }
-.thumb-title { display: block; padding: 6px 4px 3px; min-height: 2.6em; }
-.thumb.locked .thumb-title { color: #7D868C; }
 
 .loading {
   position: absolute;
@@ -358,29 +365,52 @@ html, body {
   z-index: 30;
 }
 
-/* горизонтальный экран телефона: счёт в одной строке с кнопками */
+/* горизонтальный экран телефона */
 @media (orientation: landscape) and (max-height: 520px) {
-  .hud { top: calc(var(--safe-top) + 4px); }
-  .screen { padding-top: calc(var(--safe-top) + 24px); padding-left: calc(var(--safe-left) + 152px); }
+  .screen { padding-top: calc(var(--safe-top) + 76px); }
   .panel { max-width: 560px; }
   .card { display: flex; gap: 14px; max-width: 640px; }
   .card-media { flex: 0 0 40%; padding-top: 0; align-self: flex-start; aspect-ratio: 5 / 3; }
   .card-body { padding-top: 0; }
   #screen-win .panel { padding-top: 22px; }
   #screen-win .doodle-trophy { display: none; }
-  .hint { top: 72%; }
-  .banner { top: calc(var(--safe-top) + 84px); }
+  .banner { top: calc(var(--safe-top) + 72px); }
+  .banner-name { font-size: 48px; }
 }
 
-@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.12); } 100% { transform: scale(1); } }
-@keyframes pulse { 50% { transform: translateX(-50%) scale(1.05); } }
-@keyframes breathe { 50% { transform: scale(1.04); } }
-@keyframes sheen { 0% { background-position: 130% 0, 0 0; } 60%, 100% { background-position: -30% 0, 0 0; } }
+@keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes shine { from { background-position: 0 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .btn-shine { animation: none; } }
 @keyframes banner {
   0% { opacity: 0; transform: translateY(10px) scale(0.9); }
   15% { opacity: 1; transform: none; }
   80% { opacity: 1; }
   100% { opacity: 0; }
+}
+/* цифра выпрыгивает, держится и тает к концу своей секунды */
+@keyframes count-pop {
+  0% { opacity: 0; transform: scale(0.4); }
+  18% { opacity: 1; transform: scale(1.12); }
+  30% { transform: scale(1); }
+  78% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+/* рука подводит палец, нажимает, вокруг вспыхивают лучики и круг */
+@keyframes tap-hand {
+  0%, 100% { transform: translate(7px, 12px); }
+  38% { transform: translate(0, 0); }
+  48% { transform: translate(0, 3px) scale(0.96); }
+  60% { transform: translate(0, 0); }
+}
+@keyframes tap-rays {
+  0%, 44% { opacity: 0; transform: scale(0.7); }
+  54% { opacity: 1; transform: scale(1); }
+  80%, 100% { opacity: 0; transform: scale(1.15); }
+}
+@keyframes tap-ripple {
+  0%, 46% { opacity: 0; transform: scale(0.3); }
+  52% { opacity: 0.9; }
+  85%, 100% { opacity: 0; transform: scale(1.6); }
 }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }

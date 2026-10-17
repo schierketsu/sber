@@ -76,6 +76,7 @@
     resume: function () { if (ctx && enabled) ctx.resume(); },
     flap: function () { tone(420, 0.12, 'triangle', 0.18, 640); },
     point: function () { tone(880, 0.09, 'sine', 0.12); },
+    tick: function () { tone(660, 0.12, 'triangle', 0.13); },
     coin: function () {
       tone(988, 0.08, 'square', 0.07);
       tone(1319, 0.16, 'square', 0.07, null, 0.07);

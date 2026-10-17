@@ -12,46 +12,64 @@
 <div id="app">
   <svg class="svg-defs" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E8FDFF"/><stop offset="0.3" stop-color="#8EF1FF"/><stop offset="0.55" stop-color="#FFB3EC"/><stop offset="0.8" stop-color="#B9A2FF"/><stop offset="1" stop-color="#F3EEFF"/></linearGradient></defs></svg>
 
-  <canvas id="game" aria-label="Игровое поле: нажимай, чтобы самолётик поднимался"></canvas>
-
-  <div id="hud" class="hud" hidden>
-    <canvas id="score-canvas" class="score" role="img" aria-label="Очки: 0"></canvas>
-  </div>
+  <canvas id="game" aria-label="Игровое поле: нажимай, чтобы котик поднимался"></canvas>
 
   <div id="corner" class="corner" hidden>
-    <button id="btn-close" class="icon-btn" type="button" aria-label="Закрыть игру">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+    <button id="btn-menu" class="icon-btn" type="button" aria-label="Меню">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 7h13M5.5 12h13M5.5 17h13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
     </button>
     <button id="btn-sound" class="icon-btn" type="button" aria-label="Выключить звук">
       <svg class="icon-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3.5L12 5.2v13.6L7.5 15H4z" fill="currentColor"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
       <svg class="icon-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h3.5L12 5.2v13.6L7.5 15H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
     </button>
+    <div id="hud" class="score-pill" role="status" aria-label="Очки: 0">
+      <svg class="score-star" viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="score-star" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE45C"/><stop offset="0.6" stop-color="#FFC21A"/><stop offset="1" stop-color="#FF9A1A"/></linearGradient></defs><path d="M12 2.6l2.8 6 6.6.7-4.9 4.5 1.4 6.5L12 17l-5.9 3.3 1.4-6.5-4.9-4.5 6.6-.7z" fill="url(#score-star)" stroke="url(#score-star)" stroke-width="2.4" stroke-linejoin="round"/><ellipse cx="9.6" cy="9.4" rx="2.2" ry="1.1" transform="rotate(-35 9.6 9.4)" fill="#fff" opacity="0.75"/></svg>
+      <span class="score-label" aria-hidden="true">Счёт</span>
+      <b id="score-value" class="score-value" aria-hidden="true">0</b>
+    </div>
   </div>
 
-  <div id="hint" class="hint" hidden></div>
+  <div id="hint" class="hint" role="img" aria-label="Нажми, чтобы начать" hidden>
+    <svg viewBox="0 0 80 92" aria-hidden="true">
+      <circle class="hint-ripple" cx="40" cy="26" r="12" fill="none" stroke="#fff" stroke-width="3"/>
+      <g class="hint-rays" fill="none" stroke="#fff" stroke-width="4.2" stroke-linecap="round">
+        <path d="M14 26h8M21.6 7.6l5.6 5.6M40 0v8M58.4 7.6l-5.6 5.6M66 26h-8M21.6 44.4l5.6-5.6"/>
+      </g>
+      <g class="hint-hand">
+        <g transform="translate(40 26) rotate(-16)">
+          <g fill="#30455E" stroke="#30455E" stroke-width="5" stroke-linejoin="round">
+            <rect x="-6.5" y="0" width="13" height="40" rx="6.5"/>
+            <rect x="-8" y="29" width="42" height="35" rx="13"/>
+            <circle cx="11" cy="31" r="6.5"/><circle cx="21.5" cy="33.5" r="6"/><circle cx="30" cy="38" r="5.5"/>
+            <ellipse cx="-9" cy="44" rx="6" ry="11" transform="rotate(-40 -9 44)"/>
+          </g>
+          <g fill="#fff">
+            <rect x="-6.5" y="0" width="13" height="40" rx="6.5"/>
+            <rect x="-8" y="29" width="42" height="35" rx="13"/>
+            <circle cx="11" cy="31" r="6.5"/><circle cx="21.5" cy="33.5" r="6"/><circle cx="30" cy="38" r="5.5"/>
+            <ellipse cx="-9" cy="44" rx="6" ry="11" transform="rotate(-40 -9 44)"/>
+          </g>
+          <path d="M8 56c8 5 18 4 24-3" fill="none" stroke="#DCE6F2" stroke-width="5" stroke-linecap="round"/>
+          <path d="M12 37.5v4M22 40.5v3.5" fill="none" stroke="#B9C8DA" stroke-width="1.8" stroke-linecap="round"/>
+          <ellipse cx="-2.4" cy="9" rx="1.6" ry="4.5" fill="#E8F0F8"/>
+        </g>
+      </g>
+    </svg>
+  </div>
   <div id="banner" class="banner" hidden>
     <div id="banner-name" class="banner-name"></div>
   </div>
-
-  <section id="screen-menu" class="screen-menu" hidden>
-    <div class="menu-start">
-      <div class="start-wrap">
-        <button id="btn-start" class="btn btn-primary btn-start" type="button">Полетели!</button>
-        <svg class="doodle doodle-swoosh" viewBox="0 0 56 40" aria-hidden="true"><g fill="none" stroke-linecap="round"><g stroke="url(#holo)" stroke-width="3.5"><path d="M52 7C38 5 22 7 6 13"/><path d="M52 20C40 20 28 22 15 26"/><path d="M52 33C44 33 35 34 26 36"/></g></g></svg>
-        <svg class="doodle doodle-spark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2c1.6 9.6 6.4 14.4 18 18-11.6 3.6-16.4 8.4-18 18-1.6-9.6-6.4-14.4-18-18 11.6-3.6 16.4-8.4 18-18z" fill="url(#holo)"/></svg>
-        <svg class="doodle doodle-drops" viewBox="0 0 40 40" aria-hidden="true"><g fill="#2A1470"><path d="M13 3c7 9 9 17 4 21s-12-1-10-9z"/><path d="M31 9c5 7 6 13 2 16s-9-1-8-7z"/></g></svg>
-      </div>
-    </div>
-  </section>
+  <div id="countdown" class="countdown" aria-live="assertive" hidden>
+    <div id="countdown-num" class="countdown-num"></div>
+  </div>
 
   <section id="screen-card" class="screen" hidden>
-    <div class="panel card" role="dialog" aria-modal="true" aria-labelledby="card-title">
+    <div id="card-panel" class="panel card" role="dialog" aria-modal="true" aria-labelledby="card-title" aria-describedby="card-text" tabindex="-1">
       <div id="card-media" class="card-media"><img id="card-image" alt=""></div>
       <svg class="doodle doodle-spark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2c1.6 9.6 6.4 14.4 18 18-11.6 3.6-16.4 8.4-18 18-1.6-9.6-6.4-14.4-18-18 11.6-3.6 16.4-8.4 18-18z" fill="url(#holo)"/></svg>
       <div class="card-body">
         <h2 id="card-title"></h2>
         <div id="card-text" class="card-text"></div>
-        <button id="btn-card" class="btn btn-primary" type="button">Летим дальше!</button>
       </div>
     </div>
   </section>
@@ -59,24 +77,23 @@
   <section id="screen-pause" class="screen" hidden>
     <div class="panel">
       <svg class="doodle doodle-spark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2c1.6 9.6 6.4 14.4 18 18-11.6 3.6-16.4 8.4-18 18-1.6-9.6-6.4-14.4-18-18 11.6-3.6 16.4-8.4 18-18z" fill="url(#holo)"/></svg>
-      <h2>Пауза</h2>
-      <p>Самолётик ждёт, пока ты вернёшься.</p>
-      <button class="btn btn-primary" type="button" data-action="resume">Продолжить полёт</button>
-      <button class="btn btn-secondary" type="button" data-action="restart">Начать сначала</button>
+      <h2 id="menu-title">Пауза</h2>
+      <p id="menu-text">Котик ждёт, пока ты вернёшься.</p>
+      <button id="btn-resume" class="btn btn-shine" type="button" data-action="resume">Продолжить полёт</button>
+      <button id="btn-restart" class="btn btn-secondary" type="button" data-action="restart">Начать сначала</button>
       <button class="btn btn-secondary" type="button" data-action="exit">Выйти</button>
     </div>
   </section>
 
   <section id="screen-crash" class="screen" hidden>
     <div class="panel">
-      <svg class="doodle doodle-drops" viewBox="0 0 40 40" aria-hidden="true"><g fill="#7A2A00"><path d="M13 3c7 9 9 17 4 21s-12-1-10-9z"/><path d="M31 9c5 7 6 13 2 16s-9-1-8-7z"/></g></svg>
       <svg class="doodle doodle-spark" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 2c1.6 9.6 6.4 14.4 18 18-11.6 3.6-16.4 8.4-18 18-1.6-9.6-6.4-14.4-18-18 11.6-3.6 16.4-8.4 18-18z" fill="url(#holo)"/></svg>
       <h2>В следующий раз будет лучше!</h2>
       <div class="result-row">
         <div><b id="crash-score">0</b><span id="crash-score-label">очков</span></div>
         <div><b id="crash-best">0</b><span>рекорд</span></div>
       </div>
-      <button id="btn-continue" class="btn btn-primary" type="button">Попробовать ещё раз</button>
+      <button id="btn-continue" class="btn btn-shine" type="button">Попробовать ещё раз</button>
     </div>
   </section>
 
@@ -88,7 +105,7 @@
       <h2>Ты долетел до финиша!</h2>
       <p id="win-text"></p>
       <div id="win-collection" class="collection"></div>
-      <button class="btn btn-primary" type="button" data-action="restart">Сыграть ещё</button>
+      <button class="btn btn-shine" type="button" data-action="restart">Сыграть ещё</button>
     </div>
   </section>
 

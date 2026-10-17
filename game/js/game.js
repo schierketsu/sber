@@ -1,4 +1,4 @@
-/* Кот-пилот: самолётик пролетает между препятствиями над регионами России.
+/* Кот-пилот: котик-супергерой пролетает между препятствиями над регионами России.
    Каждое препятствие — 1 очко, монетка — бонус, каждые pointsPerCard очков — открытка,
    после последней открытки региона меняется фон. Финал — когда собраны все открытки. */
 (function () {
@@ -14,11 +14,16 @@
   var BOTTOM_MARGIN = 50;
   var MAX_STEP = 1 / 120;  // шаг физики, чтобы столкновения не проскакивали
   var START_Y = 300;
-  var MENU_Y = 230;
-  var FONT = 'system-ui, -apple-system, "SF Pro Display", Roboto, "Segoe UI", sans-serif';
+  var MENU_Y = 300;
+  var MENU_ZOOM = 2;       // на заставке котик крупно и по центру
+  var INTRO_TIME = 0.9;    // за сколько секунд он отлетает на своё место слева
+  var CARD_HINT_EVERY = 5000; // раз в столько мс над открыткой появляется рука «нажми»
+  var CARD_HINT_SHOW = 2600;  // рука видна два нажатия подряд
+  var COUNTDOWN = 3;          // секунд отсчёта после открытки
+  var CARD_TAP_GUARD = 800;   // первые мс открытка не закрывается: ребёнок ещё жмёт, чтобы котик летел
 
-  /* Круги, которыми самолётик сталкивается: корпус, кот, нос. */
-  var HITBOX = [[2, 0, 12], [1, -19, 10], [22, -1, 8]];
+  /* Круги, которыми котик сталкивается: туловище, голова, передние лапы. Хвост и плащ не считаются. */
+  var HITBOX = [[0, 0, 9], [22, -17, 12.5], [27, 5, 6]];
 
   function $(id) { return document.getElementById(id); }
 
@@ -26,19 +31,25 @@
   var ctx = canvas.getContext('2d');
   var ui = {
     hud: $('hud'),
-    scoreCanvas: $('score-canvas'),
+    scoreValue: $('score-value'),
     corner: $('corner'),
-    btnClose: $('btn-close'),
+    btnMenu: $('btn-menu'),
+    menuTitle: $('menu-title'),
+    menuText: $('menu-text'),
+    btnResume: $('btn-resume'),
+    btnRestart: $('btn-restart'),
     btnSound: $('btn-sound'),
     hint: $('hint'),
     banner: $('banner'),
     bannerName: $('banner-name'),
+    countdown: $('countdown'),
+    countdownNum: $('countdown-num'),
     loading: $('loading'),
     cardMedia: $('card-media'),
     cardImage: $('card-image'),
     cardTitle: $('card-title'),
     cardText: $('card-text'),
-    btnCard: $('btn-card'),
+    cardPanel: $('card-panel'),
     crashScore: $('crash-score'),
     crashScoreLabel: $('crash-score-label'),
     crashBest: $('crash-best'),
@@ -47,12 +58,20 @@
     winCollection: $('win-collection')
   };
   var screens = {
-    menu: $('screen-menu'),
     card: $('screen-card'),
     pause: $('screen-pause'),
     crash: $('screen-crash'),
     win: $('screen-win')
   };
+
+  /* Та же рука, что на заставке, но тыкает в центр открытки: открытка закрывается нажатием. */
+  var cardHint = ui.hint.cloneNode(true);
+  cardHint.removeAttribute('id');
+  cardHint.removeAttribute('role');
+  cardHint.removeAttribute('aria-label');
+  cardHint.setAttribute('aria-hidden', 'true');
+  cardHint.className = 'hint card-hint';
+  ui.cardPanel.appendChild(cardHint);
 
   var content = null;
   var cards = [];          // все открытки подряд: { region, card, at }
@@ -61,9 +80,11 @@
 
   var scale = 1;
   var W = 360;
+  var cssK = 1;            // CSS-пикселей в единице мира
+  var playX = 100;         // где котик держится во время полёта
   var topLimit = null;     // верхняя граница просветов: ниже плашки счёта
 
-  var state = 'loading';   // menu, ready, play, card, pause, crashing, crash, win
+  var state = 'loading';   // menu, intro, ready, countdown, play, card, pause, crashing, crash, win
   var currentScreen = null;
   var score = 0;
   var best = 0;
@@ -73,11 +94,21 @@
   var pending = [];
   var cardMode = 'game';
   var cardReturn = null;
+  var menuReturn = null;   // откуда открыли меню вне полёта: { state, screen }
+  var cardOpenedAt = 0;
+  var cardHintTimer = 0;
+  var cardHintHide = 0;
   var obstacles = [];
   var coins = [];
   var particles = [];
   var floaters = [];
-  var plane = { x: 100, y: MENU_Y, vy: 0, rot: 0, baseY: START_Y };
+  var plane = {
+    x: 100, y: MENU_Y, vy: 0, rot: 0, baseY: START_Y, zoom: MENU_ZOOM,
+    lastY: MENU_Y, cape: { x: 0, v: 0 }, legs: { x: 0, v: 0 },
+    gone: false            // исчез в дыму после удара, пока не начнётся новый полёт
+  };
+  var pose = { cape: 0, legs: 0 };
+  var intro = null;        // отлёт с заставки: откуда и сколько прошло
   var scrollX = 0;
   var distToNext = 0;
   var nextGapY = START_Y;
@@ -86,6 +117,7 @@
   var transition = null;
   var crashTimer = 0;
   var bannerTimer = 0;
+  var countdownLeft = 0;
   var runStarted = false;
   var finishSent = false;
   var lastFrame = 0;
@@ -101,13 +133,6 @@
     if (b > 1 && b < 5) return forms[1];
     if (b === 1) return forms[0];
     return forms[2];
-  }
-
-  function seeded(seed) {
-    return function () {
-      seed = (seed * 1664525 + 1013904223) % 4294967296;
-      return seed / 4294967296;
-    };
   }
 
   function sceneOf(index) { return content.regions[index].scene; }
@@ -129,17 +154,20 @@
     canvas.height = Math.max(1, Math.round(cssH * dpr));
     scale = canvas.height / H;
     W = canvas.width / scale;
-    plane.x = clamp(W * 0.28, 70, 260);
+    cssK = cssH / H;
+    playX = clamp(W * 0.28, 70, 260);
+    if (state !== 'menu' && !intro) plane.x = playX;
     topLimit = null;
     Art.setup(scale, W);
     if (content) Art.release([sceneOf(regionIdx)]);
+    placeHint();
   }
 
   /* Нижний край плашки счёта в координатах мира: просветы не прячутся под неё. */
   function topMargin() {
     if (topLimit !== null) return topLimit;
-    var rect = ui.hud.hidden ? null : ui.hud.getBoundingClientRect();
-    if (!rect || !rect.height) return 95;
+    var rect = ui.hud.getBoundingClientRect();
+    if (!rect.height) return 95;
     topLimit = clamp(rect.bottom / (window.innerHeight || 1) * H + 14, 90, 200);
     return topLimit;
   }
@@ -175,86 +203,35 @@
 
   function showScreen(name) {
     currentScreen = name;
+    if (name !== 'card') stopCardHint();
     Object.keys(screens).forEach(function (key) { screens[key].hidden = key !== name; });
     if (name && screens[name]) screens[name].scrollTop = 0;
   }
 
   function setState(next) {
     state = next;
-    ui.hud.hidden = state === 'menu' || state === 'loading';
     ui.corner.hidden = state === 'loading';
-    ui.hint.hidden = state !== 'ready';
+    ui.hint.hidden = state !== 'menu' && state !== 'ready';
+    ui.countdown.hidden = state !== 'countdown';
+    placeHint();
+  }
+
+  /* Рука-подсказка стоит под котиком и «нажимает» снизу: тап поднимает его вверх. */
+  function placeHint() {
+    if (ui.hint.hidden) return;
+    var x = state === 'menu' ? W / 2 + 4 * MENU_ZOOM : playX + 6;
+    var y = state === 'menu' ? MENU_Y + 34 * MENU_ZOOM : plane.baseY + 44;
+    ui.hint.style.transform = 'translate(' + (x * cssK).toFixed(1) + 'px,' + (y * cssK).toFixed(1) + 'px)';
   }
 
   function updateHud(bump) {
-    drawScore();
+    ui.scoreValue.textContent = score;
+    ui.hud.setAttribute('aria-label', 'Очки: ' + score);
     if (bump) {
-      ui.scoreCanvas.classList.remove('bump');
-      void ui.scoreCanvas.offsetWidth;
-      ui.scoreCanvas.classList.add('bump');
+      ui.scoreValue.classList.remove('bump');
+      void ui.scoreValue.offsetWidth;
+      ui.scoreValue.classList.add('bump');
     }
-  }
-
-  /* Счёт как будто нарисован восковым карандашом: яркая неровная обводка с зерном,
-     белая заливка и тонкий карандашный контур. Максимум очков не показываем. */
-  function drawScore() {
-    var c = ui.scoreCanvas;
-    var g = c.getContext('2d');
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var size = 60;
-    var text = String(score);
-    var font = '900 ' + size + 'px ' + FONT;
-    g.font = font;
-    var tw = g.measureText(text).width;
-    var w = Math.ceil(tw + 36);
-    var h = Math.ceil(size * 1.3);
-    c.width = w * dpr;
-    c.height = h * dpr;
-    c.style.width = w + 'px';
-    c.style.height = h + 'px';
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    g.font = font;
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.lineJoin = 'round';
-    var x = w / 2;
-    var y = h / 2 + size * 0.04;
-    var rand = seeded(score * 7919 + 17);
-    var i;
-
-    var crayon = g.createLinearGradient(x - tw / 2, y - size / 2, x + tw / 2, y + size / 2);
-    crayon.addColorStop(0, '#FF9F1C');
-    crayon.addColorStop(0.5, '#FF4F8B');
-    crayon.addColorStop(1, '#9B6BFF');
-    g.strokeStyle = crayon;
-    g.shadowColor = 'rgba(20, 20, 40, 0.3)';
-    g.shadowBlur = 6;
-    g.shadowOffsetY = 2;
-    for (i = 0; i < 4; i++) {
-      g.globalAlpha = 0.6;
-      g.lineWidth = 11 + rand() * 3;
-      g.strokeText(text, x + (rand() - 0.5) * 3, y + (rand() - 0.5) * 3);
-    }
-    g.shadowColor = 'transparent';
-    g.globalCompositeOperation = 'destination-out';
-    for (i = 0; i < 170; i++) {
-      g.globalAlpha = 0.25 + rand() * 0.35;
-      g.beginPath();
-      g.arc(rand() * w, rand() * h, 0.5 + rand() * 0.9, 0, Math.PI * 2);
-      g.fill();
-    }
-    g.globalCompositeOperation = 'source-over';
-    g.globalAlpha = 1;
-    g.fillStyle = '#ffffff';
-    g.fillText(text, x, y);
-    g.strokeStyle = '#2A2340';
-    g.lineWidth = 1.4;
-    for (i = 0; i < 2; i++) {
-      g.globalAlpha = 0.7;
-      g.strokeText(text, x + (rand() - 0.5) * 1.6, y + (rand() - 0.5) * 1.6);
-    }
-    g.globalAlpha = 1;
-    c.setAttribute('aria-label', 'Очки: ' + score);
   }
 
   function showBanner(index) {
@@ -289,11 +266,7 @@
           img.src = entry.card.image;
           media.appendChild(img);
         }
-        var label = document.createElement('span');
-        label.className = 'thumb-title';
-        label.textContent = entry.card.title;
         item.appendChild(media);
-        item.appendChild(label);
         item.setAttribute('aria-label', 'Открытка: ' + entry.card.title);
         item.addEventListener('click', function () {
           cardReturn = currentScreen;
@@ -309,11 +282,7 @@
         question.className = 'thumb-q';
         question.textContent = '?';
         lock.appendChild(question);
-        var hidden = document.createElement('span');
-        hidden.className = 'thumb-title';
-        hidden.textContent = content.regions[entry.region].name;
         item.appendChild(lock);
-        item.appendChild(hidden);
       }
       el.appendChild(item);
     });
@@ -321,21 +290,46 @@
 
   /* ---------- ход игры ---------- */
 
+  /* Заставка: котик крупно по центру, под ним рука «нажми». Названия региона здесь нет —
+     оно появляется, когда котик долетит до стартовой позиции. */
   function enterMenu() {
     regionIdx = 0;
     score = 0;
     obstacles = [];
     coins = [];
     plane.vy = 0;
+    plane.zoom = MENU_ZOOM;
+    plane.x = W / 2;
+    intro = null;
+    updateHud(false);
+    showScreen(null);
     setState('menu');
-    showScreen('menu');
   }
 
+  /* Тап по заставке: котик отдаляется и улетает на своё место слева, потом появляется название региона. */
   function startGame() {
+    if (state !== 'menu') return;
     Sound.unlock();
     runStarted = true;
     checkpoint = 0;
-    resetRun(0);
+    intro = { t: 0, x: plane.x, y: plane.y, zoom: plane.zoom, rot: plane.rot };
+    setState('intro');
+  }
+
+  function stepIntro(dt) {
+    intro.t = Math.min(1, intro.t + dt / INTRO_TIME);
+    var t = intro.t;
+    var k = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    var arc = Math.sin(Math.PI * k);
+    plane.x = intro.x + (playX - intro.x) * k;
+    plane.y = intro.y + (START_Y - intro.y) * k - arc * 14;
+    plane.zoom = intro.zoom + (1 - intro.zoom) * k;
+    plane.rot = intro.rot * (1 - k) - arc * 0.08;
+    if (t >= 1) {
+      intro = null;
+      plane.zoom = 1;
+      resetRun(0);
+    }
   }
 
   function resetRun(startScore) {
@@ -352,6 +346,9 @@
     }
     plane.vy = 0;
     plane.rot = 0;
+    plane.x = playX;
+    plane.zoom = 1;
+    plane.gone = false;
     plane.baseY = START_Y;
     distToNext = 0;
     nextGapY = START_Y;
@@ -363,7 +360,7 @@
 
   function enterReady(text) {
     plane.baseY = clamp(plane.baseY, 120, GROUND - 120);
-    ui.hint.textContent = text;
+    ui.hint.setAttribute('aria-label', text);
     setState('ready');
   }
 
@@ -374,20 +371,53 @@
     Sound.flap();
   }
 
+  function inFlight() {
+    return state === 'play' || state === 'ready' || state === 'countdown';
+  }
+
   function pauseGame() {
-    if (state !== 'play' && state !== 'ready') return;
+    if (!inFlight()) return;
+    showMenu(true);
+  }
+
+  /* Кнопка меню. В полёте это пауза; на заставке и на экранах открытки, проигрыша и финиша
+     меню открывается поверх, а «Продолжить» возвращает туда, откуда его открыли. */
+  function openMenu() {
+    if (inFlight()) {
+      pauseGame();
+      return;
+    }
+    if (state === 'loading' || state === 'intro' || state === 'crashing' || state === 'pause') return;
+    menuReturn = { state: state, screen: currentScreen };
+    showMenu(false);
+  }
+
+  function showMenu(flying) {
+    ui.menuTitle.textContent = flying ? 'Пауза' : 'Меню';
+    ui.menuText.hidden = !flying;
+    ui.btnResume.textContent = flying ? 'Продолжить полёт' : 'Продолжить';
+    ui.btnRestart.hidden = state === 'menu';
     setState('pause');
     showScreen('pause');
   }
 
   function resumeGame() {
-    showScreen(null);
     Sound.resume();
+    if (menuReturn) {
+      var back = menuReturn;
+      menuReturn = null;
+      setState(back.state);
+      showScreen(back.screen);
+      if (back.screen === 'card') startCardHint();
+      return;
+    }
+    showScreen(null);
     plane.baseY = plane.y;
     enterReady('Нажми, чтобы продолжить');
   }
 
   function restart() {
+    menuReturn = null;
     Sound.unlock();
     checkpoint = 0;
     resetRun(0);
@@ -487,14 +517,13 @@
     var circles = hitCircles();
     for (i = 0; i < circles.length; i++) {
       if (circles[i].y + circles[i].r >= GROUND) {
-        crash('ground');
+        crash();
         return;
       }
     }
     for (i = 0; i < obstacles.length; i++) {
-      var hit = hitTest(obstacles[i], circles);
-      if (hit) {
-        crash(hit);
+      if (hitTest(obstacles[i], circles)) {
+        crash();
         return;
       }
     }
@@ -554,7 +583,6 @@
 
   function openCard(k, viewOnly) {
     var entry = cards[k];
-    var region = content.regions[entry.region];
     cardMode = viewOnly ? 'view' : 'game';
     if (!viewOnly) {
       setState('card');
@@ -563,7 +591,6 @@
       Sound.card();
       Bridge.vibrate();
     }
-    screens.card.querySelector('.panel').style.setProperty('--panel-color', region.color);
     ui.cardMedia.hidden = !entry.card.image;
     if (entry.card.image) ui.cardImage.src = entry.card.image;
     else ui.cardImage.removeAttribute('src');
@@ -575,17 +602,31 @@
       p.textContent = paragraph.trim();
       ui.cardText.appendChild(p);
     });
-    var label = 'Летим дальше!';
-    if (viewOnly) {
-      label = 'Закрыть';
-    } else if (k === cards.length - 1) {
-      label = 'К финишу!';
-    } else if (cards[k + 1].region !== entry.region) {
-      var nextRegion = content.regions[cards[k + 1].region];
-      if (nextRegion.nameTo) label = 'Летим ' + nextRegion.nameTo + '!';
-    }
-    ui.btnCard.textContent = label;
     showScreen('card');
+    cardOpenedAt = Date.now();
+    startCardHint();
+    ui.cardPanel.focus({ preventScroll: true });
+  }
+
+  function startCardHint() {
+    stopCardHint();
+    cardHintTimer = setInterval(function () {
+      cardHint.hidden = false;
+      clearTimeout(cardHintHide);
+      cardHintHide = setTimeout(function () { cardHint.hidden = true; }, CARD_HINT_SHOW);
+    }, CARD_HINT_EVERY);
+  }
+
+  function stopCardHint() {
+    clearInterval(cardHintTimer);
+    clearTimeout(cardHintHide);
+    cardHint.hidden = true;
+  }
+
+  /* Нажатие в любом месте открытки закрывает её. */
+  function tapCard() {
+    if (currentScreen !== 'card' || Date.now() - cardOpenedAt < CARD_TAP_GUARD) return;
+    closeCard();
   }
 
   function closeCard() {
@@ -604,8 +645,37 @@
     showScreen(null);
     var r = regionForScore(score);
     if (r !== regionIdx) switchRegion(r);
-    plane.baseY = plane.y;
-    enterReady('Нажми, чтобы лететь дальше');
+    startCountdown();
+  }
+
+  /* После открытки по центру экрана идёт отсчёт 3, 2, 1, и котик сам летит дальше.
+     Нажатия во время отсчёта не считаются, чтобы не взлететь раньше времени. */
+  function startCountdown() {
+    plane.baseY = clamp(plane.y, 120, GROUND - 120);
+    countdownLeft = COUNTDOWN;
+    ui.countdown.style.setProperty('--region-color', content.regions[regionIdx].color);
+    setState('countdown');
+    showCount(COUNTDOWN);
+  }
+
+  function showCount(n) {
+    ui.countdownNum.textContent = n;
+    ui.countdownNum.classList.remove('tick');
+    void ui.countdownNum.offsetWidth;
+    ui.countdownNum.classList.add('tick');
+    Sound.tick();
+  }
+
+  function stepCountdown(dt) {
+    var shown = Math.ceil(countdownLeft);
+    countdownLeft -= dt;
+    if (countdownLeft <= 0) {
+      setState('play');
+      plane.vy = FLAP_V * 0.6;
+      Sound.flap();
+    } else if (Math.ceil(countdownLeft) !== shown) {
+      showCount(Math.ceil(countdownLeft));
+    }
   }
 
   function switchRegion(r) {
@@ -617,19 +687,42 @@
     showBanner(r);
   }
 
-  function crash(reason) {
-    crashTimer = 0.9;
+  /* Удар: котик исчезает в облачке дыма — пух клубов по всей фигуре и несколько искр. */
+  function crash() {
+    crashTimer = 1.0;
+    plane.gone = true;
     flash = 1;
-    plane.vy = reason === 'top' ? 80 : -170;
+    plane.vy = 0;
     best = Math.max(best, score);
     setState('crashing');
     Sound.hit();
     Bridge.vibrate();
-    for (var i = 0; i < 12; i++) {
+    var spots = hitCircles();
+    spots.push({ x: plane.x - 26, y: plane.y - 14, r: 10 }, { x: plane.x - 34, y: plane.y + 2, r: 8 });
+    var cx = plane.x + 4;
+    var cy = plane.y - 4;
+    var i;
+    for (i = 0; i < 20; i++) {
+      var s = spots[i % spots.length];
       var a = Math.random() * Math.PI * 2;
+      var x = s.x + Math.cos(a) * s.r * Math.random();
+      var y = s.y + Math.sin(a) * s.r * Math.random();
+      var dx = x - cx;
+      var dy = y - cy;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var sp = 25 + Math.random() * 45;
+      var life = 0.75 + Math.random() * 0.4;
       particles.push({
-        kind: 'puff', x: plane.x, y: plane.y, vx: Math.cos(a) * 50, vy: Math.sin(a) * 50 - 20,
-        life: 0.7, max: 0.7, size: 6 + Math.random() * 6, color: 'rgba(255,255,255,0.8)'
+        kind: 'smoke', x: x, y: y, vx: dx / len * sp, vy: dy / len * sp - 18,
+        life: life, max: life, size: 10 + Math.random() * 6, grow: 10 + Math.random() * 8
+      });
+    }
+    for (i = 0; i < 8; i++) {
+      var b = Math.random() * Math.PI * 2;
+      var v = 90 + Math.random() * 70;
+      particles.push({
+        kind: 'spark', x: cx, y: cy, vx: Math.cos(b) * v, vy: Math.sin(b) * v,
+        life: 0.45, max: 0.45, size: 2 + Math.random() * 1.5, color: i % 2 ? '#ffffff' : '#ffe36b'
       });
     }
   }
@@ -685,12 +778,17 @@
 
     if (state === 'menu') {
       scrollX += speed * 0.7 * dt;
+      plane.x = W / 2;
       plane.y += (MENU_Y + Math.sin(time * 2) * 10 - plane.y) * Math.min(1, dt * 4);
       plane.rot = Math.cos(time * 2) * 0.06;
-    } else if (state === 'ready') {
+    } else if (state === 'intro') {
+      scrollX += speed * (0.7 + 0.8 * Math.sin(Math.PI * intro.t)) * dt;
+      stepIntro(dt);
+    } else if (state === 'ready' || state === 'countdown') {
       if (!obstacles.length) scrollX += speed * dt;
       plane.y += (plane.baseY + Math.sin(time * 3) * 6 - plane.y) * Math.min(1, dt * 4);
       plane.rot += (Math.cos(time * 3) * 0.05 - plane.rot) * Math.min(1, dt * 6);
+      if (state === 'countdown') stepCountdown(dt);
     } else if (state === 'play') {
       var left = dt;
       while (left > 0 && state === 'play') {
@@ -699,12 +797,10 @@
         left -= step;
       }
     } else if (state === 'crashing') {
-      plane.vy = Math.min(plane.vy + GRAVITY * dt, MAX_FALL);
-      plane.y = Math.min(plane.y + plane.vy * dt, GROUND - 12);
-      plane.rot += (1.1 - plane.rot) * Math.min(1, dt * 5);
       crashTimer -= dt;
       if (crashTimer <= 0) showCrash();
     }
+    stepPose(dt);
 
     var i;
     for (i = particles.length - 1; i >= 0; i--) {
@@ -718,13 +814,38 @@
       p.y += p.vy * dt;
       if (p.g) p.vy += p.g * dt;
       if (p.vr) p.rot += p.vr * dt;
-      if (p.kind === 'puff') p.size += dt * 18;
+      if (p.kind === 'smoke') {
+        var drag = 1 - Math.min(1, dt * 3);
+        p.vx *= drag;
+        p.vy = p.vy * drag - 14 * dt;
+        p.size += dt * p.grow;
+      }
     }
     for (i = floaters.length - 1; i >= 0; i--) {
       floaters[i].life -= dt;
       floaters[i].y -= 34 * dt;
       if (floaters[i].life <= 0) floaters.splice(i, 1);
     }
+  }
+
+  /* Плащ и лапы — на пружинах: догоняют отклонение, которое задаёт вертикальная скорость котика.
+     Рывок вверх — отстают и уходят вниз, падение — приподнимаются. Плащ лёгкий и качается дольше,
+     лапы тяжелее: догоняют быстрее и почти без перехлёста.
+     k — жёсткость (чем больше, тем быстрее догоняет), c — затухание (чем меньше, тем дольше качается). */
+  var CAPE_SPRING = { k: 140, c: 11 };
+  var LEG_SPRING = { k: 200, c: 18 };
+  function stepPose(dt) {
+    if (dt <= 0) return;
+    var vy = (plane.y - plane.lastY) / dt;
+    plane.lastY = plane.y;
+    var target = clamp(vy / FLAP_V * 1.3, -0.6, 1.2);
+    spring(plane.cape, target, CAPE_SPRING, dt);
+    spring(plane.legs, target, LEG_SPRING, dt);
+  }
+
+  function spring(s, target, p, dt) {
+    s.v += (p.k * (target - s.x) - p.c * s.v) * dt;
+    s.x += s.v * dt;
   }
 
   function render() {
@@ -743,10 +864,16 @@
     for (i = 0; i < coins.length; i++) {
       if (!coins[i].taken && coins[i].x < W + 20) Art.drawCoin(ctx, coins[i].x, coins[i].y, time + coins[i].phase);
     }
-    Art.drawPlane(ctx, plane.x, plane.y, plane.rot, time);
+    if (!plane.gone) {
+      pose.cape = plane.cape.x;
+      pose.legs = plane.legs.x;
+      Art.drawHero(ctx, plane.x, plane.y, plane.rot, time, plane.zoom, pose);
+    }
 
+    drawSmoke();
     for (i = 0; i < particles.length; i++) {
       var p = particles[i];
+      if (p.kind === 'smoke') continue;
       ctx.globalAlpha = Math.min(1, p.life / p.max * 1.5);
       ctx.fillStyle = p.color;
       if (p.kind === 'confetti') {
@@ -782,6 +909,24 @@
     }
   }
 
+  /* Дым в два прохода: сначала сиреневые тени всех клубов, потом светлые клубы поверх —
+     облако выглядит цельным, с объёмом снизу. */
+  function drawSmoke() {
+    for (var pass = 0; pass < 2; pass++) {
+      ctx.fillStyle = pass ? '#F7F5FF' : 'rgba(150,140,195,0.5)';
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        if (p.kind !== 'smoke') continue;
+        ctx.globalAlpha = Math.min(1, p.life / p.max * 2);
+        var r = pass ? p.size * 0.86 : p.size;
+        ctx.beginPath();
+        ctx.arc(p.x + (pass ? -0.08 : 0.18) * p.size, p.y + (pass ? -0.1 : 0.22) * p.size, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
   function frame(now) {
     requestAnimationFrame(frame);
     if (!lastFrame) lastFrame = now;
@@ -796,26 +941,28 @@
 
   canvas.addEventListener('pointerdown', function (e) {
     e.preventDefault();
-    if (state === 'ready' || state === 'play') flap();
+    if (state === 'menu') startGame();
+    else if (state === 'ready' || state === 'play') flap();
   });
 
   document.addEventListener('keydown', function (e) {
-    if (e.code === 'Space' || e.code === 'ArrowUp') {
+    if (currentScreen === 'card' && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) {
+      e.preventDefault();
+      tapCard();
+    } else if (state === 'menu' && (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter')) {
+      e.preventDefault();
+      startGame();
+    } else if (e.code === 'Space' || e.code === 'ArrowUp') {
       e.preventDefault();
       if (state === 'ready' || state === 'play') flap();
     } else if (e.code === 'Escape' || e.code === 'KeyP') {
-      if (state === 'pause') resumeGame(); else pauseGame();
+      if (state === 'pause') resumeGame(); else openMenu();
     }
   });
 
-  $('btn-start').addEventListener('click', startGame);
-  ui.btnCard.addEventListener('click', closeCard);
+  screens.card.addEventListener('click', tapCard);
   ui.btnContinue.addEventListener('click', continueRun);
-  /* «Закрыть» во время полёта сначала ставит паузу: ребёнок часто жмёт и в угол экрана. */
-  ui.btnClose.addEventListener('click', function () {
-    if (state === 'play' || state === 'ready') pauseGame();
-    else exitGame();
-  });
+  ui.btnMenu.addEventListener('click', openMenu);
   ui.btnSound.addEventListener('click', function () {
     Sound.unlock();
     Sound.setEnabled(!Sound.isEnabled());
@@ -848,12 +995,19 @@
   resize();
   updateSoundButton();
   requestAnimationFrame(frame);
+  /* Заставка открывается, когда готовы и контент, и кадры котика. */
+  var loadsLeft = 2;
+  function loaded() {
+    if (--loadsLeft) return;
+    ui.loading.hidden = true;
+    enterMenu();
+  }
   Content.load(function (c) {
     setupContent(c);
     updateHud(false);
-    ui.loading.hidden = true;
-    enterMenu();
+    loaded();
   });
+  Art.load(loaded);
 
   /* Хук для автотестов: включается только параметром ?debug в адресе. */
   if (/[?&]debug\b/.test(location.search)) {

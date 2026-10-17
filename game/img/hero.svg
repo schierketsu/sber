@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3520" height="280" viewBox="0 0 3520 280">
+  <!-- Восемь слоёв по 440×280 в ряд: 0 туловище с головой, 1 плащ, 2 хвост, 3 закрытые глаза,
+       4 дальняя задняя лапа (вытянута назад, за туловищем), 5 верхняя передняя лапа (за туловищем),
+       6 нижняя передняя лапа (перед туловищем), 7 ближняя задняя лапа (отведена назад, перед туловищем).
+       Градиенты шерсти заданы в координатах слоя (userSpaceOnUse),
+       поэтому цвет на стыках частей совпадает и котик выглядит цельным. -->
+  <defs>
+    <linearGradient id="fur" gradientUnits="userSpaceOnUse" x1="0" y1="140" x2="0" y2="244">
+      <stop offset="0" stop-color="#BCC6D1"/>
+      <stop offset="1" stop-color="#93A0AE"/>
+    </linearGradient>
+    <linearGradient id="furFar" gradientUnits="userSpaceOnUse" x1="0" y1="180" x2="0" y2="246">
+      <stop offset="0" stop-color="#8F9BA9"/>
+      <stop offset="1" stop-color="#7B8795"/>
+    </linearGradient>
+    <linearGradient id="furHead" gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="166">
+      <stop offset="0" stop-color="#C3CCD6"/>
+      <stop offset="1" stop-color="#9DA9B6"/>
+    </linearGradient>
+    <linearGradient id="furTail" gradientUnits="userSpaceOnUse" x1="0" y1="84" x2="0" y2="184">
+      <stop offset="0" stop-color="#BCC6D1"/>
+      <stop offset="1" stop-color="#96A3B1"/>
+    </linearGradient>
+    <linearGradient id="cape" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F0468E"/>
+      <stop offset="1" stop-color="#C81E6A"/>
+    </linearGradient>
+    <linearGradient id="lining" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFB3D3"/>
+      <stop offset="1" stop-color="#FF7FB5"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE27A"/>
+      <stop offset="1" stop-color="#F5A800"/>
+    </linearGradient>
+    <clipPath id="torso">
+      <path d="M160 190 C158 162 196 150 246 150 C280 150 302 152 320 158 C338 165 346 182 342 198 C338 220 302 232 250 232 C198 232 160 220 160 190 Z"/>
+    </clipPath>
+    <clipPath id="hindFar"><path d="M226 184 C196 184 160 190 132 194 C114 196 110 214 128 218 C160 219 198 214 230 210 Z"/></clipPath>
+    <clipPath id="hindNear"><path d="M144 214 C164 212 182 204 198 192 C210 184 228 188 232 202 C236 216 226 228 210 230 C190 234 166 240 142 241 C124 238 126 216 144 214 Z"/></clipPath>
+    <clipPath id="frontLow"><path d="M283 200 C283 189 296 184 307 189 C327 199 343 211 359 219 C374 225 372 247 355 248 C334 246 306 233 288 219 C282 214 282 207 283 200 Z"/></clipPath>
+    <clipPath id="frontNear"><path d="M280 174 C316 176 352 182 386 186 C401 188 403 210 387 213 C352 215 314 211 280 206 Z"/></clipPath>
+  </defs>
+
+  <!-- 0: туловище, шея, грудка, голова в маске, воротник плаща с застёжкой — неподвижно -->
+  <g id="body">
+    <path d="M160 190 C158 162 196 150 246 150 C280 150 302 152 320 158 C338 165 346 182 342 198 C338 220 302 232 250 232 C198 232 160 220 160 190 Z" fill="url(#fur)"/>
+    <g clip-path="url(#torso)">
+      <!-- светлый живот и грудка, мягкая тень снизу, блик на спине -->
+      <path d="M190 236 C214 220 262 216 300 214 C318 206 330 190 334 172 C346 180 350 200 344 214 C330 236 250 244 190 236 Z" fill="#EEF2F6"/>
+      <path d="M300 214 C318 206 330 190 334 172 C322 170 306 176 298 190 C292 200 294 210 300 214 Z" fill="#F6F8FA"/>
+      <ellipse cx="236" cy="158" rx="62" ry="8" fill="#FFFFFF" opacity="0.28"/>
+      <path d="M160 214 C200 236 290 238 342 206 L344 240 L158 240 Z" fill="#6E7A88" opacity="0.18"/>
+    </g>
+    <path d="M206 155 C204 164 207 171 212 175 M230 152 C228 162 231 169 236 173 M254 152 C253 161 256 168 261 171" stroke="#8693A0" stroke-width="5" stroke-linecap="round" fill="none"/>
+
+    <!-- шея: голова сидит на туловище -->
+    <path d="M300 150 C310 136 352 134 366 150 C372 164 360 178 338 180 C318 182 300 172 300 150 Z" fill="url(#fur)"/>
+
+    <!-- завязки маски за головой -->
+    <path d="M296 96 C280 88 266 84 250 86 C258 92 262 98 262 104 C272 102 284 104 294 108 Z" fill="#E5357F"/>
+    <path d="M294 106 C282 110 270 118 262 128 C272 128 280 126 288 120 Z" fill="#C81E6A"/>
+
+    <!-- голова -->
+    <path d="M292 82 C287 62 287 42 291 30 C293 23 300 21 306 26 C319 36 331 48 340 60 Z" fill="url(#furHead)"/>
+    <path d="M298 70 C296 56 297 44 299 36 C309 44 318 52 326 61 Z" fill="#F6A9BD"/>
+    <path d="M360 58 C372 46 386 34 399 26 C405 22 412 25 412 32 C413 47 412 64 409 82 Z" fill="url(#furHead)"/>
+    <path d="M372 59 C381 51 391 43 401 37 C402 48 402 60 401 71 Z" fill="#F6A9BD"/>
+    <path d="M284 104 C284 70 312 50 348 50 C386 50 414 70 414 104 C414 132 396 152 370 160 C356 164 338 164 324 160 C298 152 284 132 284 104 Z" fill="url(#furHead)"/>
+    <ellipse cx="330" cy="64" rx="20" ry="7" transform="rotate(-12 330 64)" fill="#FFFFFF" opacity="0.35"/>
+    <path d="M339 55 C338 62 340 67 343 71 M350 53 C350 61 351 66 353 70 M361 55 C362 62 361 67 358 71" stroke="#8693A0" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <!-- щёки и мордочка -->
+    <path d="M298 128 C304 150 326 161 349 161 C373 161 394 150 400 128 C391 141 373 146 349 146 C325 146 307 141 298 128 Z" fill="#EEF2F6"/>
+    <ellipse cx="350" cy="136" rx="30" ry="20" fill="#F7F8FA"/>
+
+    <!-- маска -->
+    <path d="M290 100 C290 84 310 80 326 82 C336 84 342 88 349 88 C356 88 362 84 372 82 C390 80 410 84 410 100 C410 116 396 124 380 122 C368 120 358 114 349 114 C340 114 330 120 318 122 C302 124 290 116 290 100 Z" fill="#E5357F"/>
+    <path d="M300 92 C306 86 318 85 328 87" stroke="#FF8FBF" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <!-- глаза -->
+    <ellipse cx="322" cy="102" rx="15" ry="17" fill="#FFFFFF"/>
+    <ellipse cx="376" cy="102" rx="16" ry="18" fill="#FFFFFF"/>
+    <ellipse cx="326" cy="104" rx="10.5" ry="12.5" fill="#2F2A3D"/>
+    <ellipse cx="380" cy="104" rx="11" ry="13" fill="#2F2A3D"/>
+    <circle cx="322" cy="98" r="4.6" fill="#FFFFFF"/>
+    <circle cx="376" cy="98" r="4.8" fill="#FFFFFF"/>
+    <circle cx="330" cy="110" r="2" fill="#FFFFFF"/>
+    <circle cx="385" cy="110" r="2.1" fill="#FFFFFF"/>
+
+    <!-- румянец, нос, рот, усы -->
+    <ellipse cx="304" cy="132" rx="11" ry="6.5" fill="#FF9FB8" opacity="0.6"/>
+    <ellipse cx="396" cy="130" rx="11" ry="6.5" fill="#FF9FB8" opacity="0.6"/>
+    <path d="M343 124 C343 120 357 120 357 124 C357 128 352 131 350 131 C348 131 343 128 343 124 Z" fill="#F27A9B"/>
+    <path d="M350 131 v3" stroke="#5A3A48" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M336 134 C340 152 360 152 364 134 C356 138 344 138 336 134 Z" fill="#6B3446"/>
+    <path d="M342 145 C346 140 354 140 358 145 C355 150 345 150 342 145 Z" fill="#FF8FA6"/>
+    <g stroke="#7E8A97" stroke-width="1.8" stroke-linecap="round" opacity="0.7">
+      <path d="M318 134 L292 130 M318 140 L294 142"/>
+      <path d="M382 134 L408 129 M382 140 L407 141"/>
+    </g>
+
+    <!-- воротник плаща вокруг шеи и застёжка со звездой -->
+    <path d="M296 150 C306 164 330 172 356 168 C364 166 370 162 372 156 C372 168 364 180 346 184 C324 188 304 180 296 168 C292 162 292 156 296 150 Z" fill="url(#cape)"/>
+    <path d="M300 160 C312 170 332 175 352 172" stroke="#FF8FBF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
+    <circle cx="334" cy="178" r="12" fill="url(#gold)" stroke="#E08A00" stroke-width="2"/>
+    <path d="M334 170.5 l2.3 4.6 5.1 0.7 -3.7 3.6 0.9 5.1 -4.6 -2.4 -4.6 2.4 0.9 -5.1 -3.7 -3.6 5.1 -0.7 Z" fill="#FFF6C2"/>
+  </g>
+
+  <!-- 1: плащ — большой, с подкладкой и складками -->
+  <g id="cape" transform="translate(440 0)">
+    <path d="M304 152 C262 128 196 82 132 50 C100 34 62 26 22 34 C30 48 26 62 16 74 C30 84 32 98 22 112 C36 120 40 134 32 150 C90 160 160 176 230 188 C262 192 290 184 304 152 Z" fill="url(#cape)"/>
+    <path d="M304 152 C262 128 196 82 132 50 C100 34 62 26 22 34 C64 36 104 50 140 70 C196 100 256 136 304 160 Z" fill="url(#lining)"/>
+    <g stroke="#B01A5C" stroke-width="5" stroke-linecap="round" fill="none" opacity="0.45">
+      <path d="M262 168 C214 150 150 120 74 84"/>
+      <path d="M244 182 C196 170 130 150 60 128"/>
+    </g>
+    <path d="M150 72 C120 58 92 50 64 48" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.5"/>
+  </g>
+
+  <!-- 2: хвост — корень спрятан под туловищем -->
+  <g id="tail" transform="translate(880 0)">
+    <path d="M196 186 C160 180 116 180 88 160 C64 144 54 120 56 98 C57 88 70 84 76 92 C80 112 88 130 106 142 C128 156 162 160 198 166 Z" fill="url(#furTail)"/>
+    <path d="M56 98 C57 88 70 84 76 92 C78 98 79 104 81 110 C72 112 62 108 56 98 Z" fill="#F4F6F9"/>
+  </g>
+
+  <!-- 3: закрытые глаза — веки цвета головы и улыбчивые дуги -->
+  <g id="blink" transform="translate(1320 0)">
+    <ellipse cx="322" cy="102" rx="16" ry="18" fill="url(#furHead)"/>
+    <ellipse cx="376" cy="102" rx="17" ry="19" fill="url(#furHead)"/>
+    <path d="M309 104 C315 96 329 96 335 104" stroke="#2F2A3D" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M362 104 C368 96 384 96 390 104" stroke="#2F2A3D" stroke-width="4" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- 4: дальняя задняя лапа — вытянута назад из-под туловища, поворачивается вокруг бедра (205, 205) -->
+  <g id="hind" transform="translate(1760 0)">
+    <path d="M226 184 C196 184 160 190 132 194 C114 196 110 214 128 218 C160 219 198 214 230 210 Z" fill="url(#furFar)"/>
+    <g clip-path="url(#hindFar)"><ellipse cx="124" cy="206" rx="22" ry="16" fill="#D9E0E7"/></g>
+    <path d="M124 201 v8 M131 200 v9" stroke="#B9C3CE" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- 5: верхняя передняя лапа — тянется вперёд из-под груди, поворачивается вокруг плеча (300, 194) -->
+  <g id="front" transform="translate(2200 0)">
+    <path d="M280 174 C316 176 352 182 386 186 C401 188 403 210 387 213 C352 215 314 211 280 206 Z" fill="url(#fur)"/>
+    <g clip-path="url(#frontNear)"><ellipse cx="394" cy="199" rx="24" ry="18" fill="#F4F6F9"/></g>
+    <path d="M343 180 C346 186 346 194 343 200" stroke="#8693A0" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M386 193 v11 M392 194 v10" stroke="#C7CFD8" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- 6: нижняя передняя лапа — ближняя к нам, поверх туловища; круглое плечо с центром
+       в точке поворота (296, 204), поэтому при повороте не видно щели -->
+  <g id="frontLow" transform="translate(2640 0)">
+    <path d="M283 200 C283 189 296 184 307 189 C327 199 343 211 359 219 C374 225 372 247 355 248 C334 246 306 233 288 219 C282 214 282 207 283 200 Z" fill="url(#fur)"/>
+    <g clip-path="url(#frontLow)"><ellipse cx="360" cy="236" rx="22" ry="17" fill="#F4F6F9"/></g>
+    <path d="M314 196 C310 203 310 211 313 217 M330 205 C326 212 326 220 329 226" stroke="#8693A0" stroke-width="4" stroke-linecap="round" fill="none"/>
+    <path d="M361 231 v10 M367 230 v10" stroke="#C7CFD8" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- 7: ближняя задняя лапа — отведена назад и лежит поверх туловища; круглое бедро с центром
+       в точке поворота (212, 208), поэтому при повороте не видно щели -->
+  <g id="hindLow" transform="translate(3080 0)">
+    <path d="M144 214 C164 212 182 204 198 192 C210 184 228 188 232 202 C236 216 226 228 210 230 C190 234 166 240 142 241 C124 238 126 216 144 214 Z" fill="url(#fur)"/>
+    <g clip-path="url(#hindNear)"><ellipse cx="136" cy="228" rx="24" ry="18" fill="#F4F6F9"/></g>
+    <path d="M138 224 v9 M145 223 v10" stroke="#C7CFD8" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
